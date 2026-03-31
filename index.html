@@ -575,7 +575,10 @@ function renderSettle(){
   if(!open.length){list.innerHTML='';noS.style.display='block';return;}
   noS.style.display='none';
   list.innerHTML=open.map(g=>`<div class="card">
-    <div style="font-size:14px;font-weight:500;margin-bottom:8px;">${g.home} vs ${g.away}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <div style="font-size:14px;font-weight:500;">${g.home} vs ${g.away}</div>
+      <button class="icon-btn danger" onclick="deleteGame(${g.id})" style="font-size:12px;color:#c62828;border-color:#c62828;">Delete game</button>
+    </div>
     ${g.homeSpread&&!g.spreadSettled?`<div style="font-size:12px;color:#666;">Spread: who covers?</div>
     <div class="result-btns"><button class="result-btn" onclick="settleMarket(${g.id},'spread','home')">${g.home} covers</button><button class="result-btn" onclick="settleMarket(${g.id},'spread','away')">${g.away} covers</button></div>`:''}
     ${g.homeML!=null&&!g.mlSettled?`<div style="font-size:12px;color:#666;margin-top:10px;">Moneyline: who won?</div>
@@ -583,6 +586,22 @@ function renderSettle(){
     ${g.ouTotal!=null&&!g.ouSettled?`<div style="font-size:12px;color:#666;margin-top:10px;">O/U ${g.ouTotal}: final combined score?</div>
     <div style="display:flex;gap:8px;margin-top:6px;align-items:center;"><input type="number" id="final-score-${g.id}" placeholder="e.g. 48" style="flex:1;margin-top:0;"/><button class="result-btn" style="flex:0 0 auto;padding:8px 12px;" onclick="settleOU(${g.id})">Settle O/U</button></div>`:''}
   </div>`).join('');
+}
+
+function deleteGame(gameId){
+  const game=state.games.find(g=>g.id==gameId);
+  if(!game)return;
+  if(!confirm(`Delete "${game.home} vs ${game.away}"? Any open bets on this game will be refunded.`))return;
+  // Refund any open bets on this game
+  state.bets.filter(b=>b.gameId==gameId&&b.status==='open').forEach(b=>{
+    b.status='refunded';
+    if(state.players[b.player]) state.players[b.player].balance=Math.round((state.players[b.player].balance||0)+b.wager);
+  });
+  state.games=state.games.filter(g=>g.id!=gameId);
+  scheduleSave();
+  if(state.players[currentPlayer]) document.getElementById('cur-balance').textContent='$'+state.players[currentPlayer].balance.toLocaleString();
+  renderSettle();
+  renderGames();
 }
 
 function settleMarket(gameId,market,side){
