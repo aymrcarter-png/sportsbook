@@ -1,0 +1,1975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Legacy | CFB 25 League</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #E8C96A;
+    --gold-dark: #8B6914;
+    --black: #0A0A0A;
+    --dark: #111111;
+    --dark2: #1A1A1A;
+    --dark3: #222222;
+    --white: #F5F0E8;
+    --gray: #888888;
+    --red: #C0392B;
+    --green: #27AE60;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Barlow', sans-serif;
+    font-weight: 400;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── NOISE TEXTURE OVERLAY ─── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  /* ─── NAV ─── */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10,10,10,0.96);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(201,168,76,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 40px;
+    height: 64px;
+  }
+
+  .nav-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 3px;
+    color: var(--gold);
+    text-shadow: 0 0 30px rgba(201,168,76,0.4);
+    cursor: pointer;
+  }
+
+  .nav-logo span { color: var(--white); }
+
+  .nav-links {
+    display: flex;
+    gap: 4px;
+    list-style: none;
+  }
+
+  .nav-links li a {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--gray);
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+
+  .nav-links li a:hover,
+  .nav-links li a.active {
+    color: var(--gold);
+    background: rgba(201,168,76,0.08);
+  }
+
+  .nav-badge {
+    background: var(--gold);
+    color: var(--black);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 1px;
+    padding: 4px 12px;
+    border-radius: 2px;
+    text-transform: uppercase;
+  }
+
+  /* ─── PAGES ─── */
+  .page { display: none; animation: fadeIn 0.3s ease; }
+  .page.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ─── HERO ─── */
+  .hero {
+    position: relative;
+    padding: 80px 40px 60px;
+    overflow: hidden;
+    border-bottom: 1px solid rgba(201,168,76,0.1);
+  }
+
+  .hero::before {
+    content: 'THE LEGACY';
+    position: absolute;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(100px, 20vw, 220px);
+    color: rgba(201,168,76,0.04);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    white-space: nowrap;
+    pointer-events: none;
+    letter-spacing: 10px;
+  }
+
+  .hero-tag {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .hero-tag::before {
+    content: '';
+    width: 30px;
+    height: 1px;
+    background: var(--gold);
+  }
+
+  .hero h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(60px, 10vw, 110px);
+    line-height: 0.9;
+    letter-spacing: 4px;
+    color: var(--white);
+    margin-bottom: 20px;
+  }
+
+  .hero h1 em {
+    color: var(--gold);
+    font-style: normal;
+  }
+
+  .hero-sub {
+    font-size: 16px;
+    color: var(--gray);
+    font-weight: 300;
+    letter-spacing: 0.5px;
+  }
+
+  /* ─── GRID LAYOUT ─── */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 24px;
+    padding: 32px 40px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .full-width {
+    grid-column: 1 / -1;
+  }
+
+  /* ─── SECTION CARD ─── */
+  .card {
+    background: var(--dark);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    background: rgba(255,255,255,0.02);
+  }
+
+  .card-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .card-title::before {
+    content: '';
+    width: 3px;
+    height: 16px;
+    background: var(--gold);
+    border-radius: 2px;
+  }
+
+  .card-link {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--gold);
+    text-decoration: none;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+
+  .card-link:hover { opacity: 0.7; }
+
+  /* ─── STANDINGS TABLE ─── */
+  .standings-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .standings-table thead tr {
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .standings-table th {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--gray);
+    padding: 10px 20px;
+    text-align: left;
+  }
+
+  .standings-table th:not(:first-child):not(:nth-child(2)) {
+    text-align: center;
+  }
+
+  .standings-table td {
+    padding: 12px 20px;
+    font-size: 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    vertical-align: middle;
+  }
+
+  .standings-table td:not(:first-child):not(:nth-child(2)) {
+    text-align: center;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .standings-table tbody tr {
+    transition: background 0.15s;
+    cursor: default;
+  }
+
+  .standings-table tbody tr:hover {
+    background: rgba(255,255,255,0.03);
+  }
+
+  .rank-num {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray);
+    width: 32px;
+    display: inline-block;
+    text-align: center;
+  }
+
+  .team-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .team-logo {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 13px;
+    color: white;
+    flex-shrink: 0;
+    font-weight: 400;
+  }
+
+  .team-full-name {
+    font-weight: 500;
+    font-size: 14px;
+  }
+
+  .conf-tag {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--gray);
+    text-transform: uppercase;
+  }
+
+  .pct { color: var(--gray); font-size: 13px !important; }
+
+  .conf-section-header {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold);
+    padding: 8px 20px;
+    background: rgba(201,168,76,0.06);
+    border-bottom: 1px solid rgba(201,168,76,0.1);
+  }
+
+  /* ─── GAME SCORES ─── */
+  .score-card {
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: background 0.15s;
+  }
+
+  .score-card:hover { background: rgba(255,255,255,0.02); }
+
+  .score-card-meta {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+
+  .score-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .score-team {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .score-logo {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 10px;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  .score-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    letter-spacing: 1px;
+    min-width: 36px;
+    text-align: right;
+  }
+
+  .score-num.winner { color: var(--white); }
+  .score-num.loser { color: var(--gray); }
+  .score-team.loser-team { opacity: 0.6; }
+
+  .final-tag {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    color: var(--gray);
+    text-transform: uppercase;
+    text-align: center;
+    margin-top: 4px;
+  }
+
+  /* ─── TOP 25 SIDEBAR ─── */
+  .ranking-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    transition: background 0.15s;
+  }
+
+  .ranking-row:hover { background: rgba(255,255,255,0.03); }
+
+  .ranking-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    color: var(--gold);
+    width: 28px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .ranking-num.top3 { color: var(--gold-light); font-size: 20px; }
+
+  .ranking-info { flex: 1; }
+
+  .ranking-name {
+    font-weight: 500;
+    font-size: 14px;
+  }
+
+  .ranking-record {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    color: var(--gray);
+    margin-top: 1px;
+  }
+
+  .trend {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .trend.up { color: var(--green); }
+  .trend.down { color: var(--red); }
+  .trend.same { color: var(--gray); }
+
+  /* ─── SCHEDULE ─── */
+  .week-header {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold);
+    padding: 12px 20px 8px;
+    border-bottom: 1px solid rgba(201,168,76,0.1);
+    background: rgba(201,168,76,0.04);
+  }
+
+  .schedule-game {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    transition: background 0.15s;
+  }
+
+  .schedule-game:hover { background: rgba(255,255,255,0.02); }
+
+  .schedule-teams {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+  }
+
+  .schedule-team-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .schedule-score {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 1px;
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 40px;
+  }
+
+  .schedule-score span.win { color: var(--white); }
+  .schedule-score span.loss { color: var(--gray); }
+
+  .vs-divider {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--gray);
+    letter-spacing: 1px;
+    padding: 0 16px;
+    flex-shrink: 0;
+  }
+
+  .status-badge {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .status-badge.final { background: rgba(255,255,255,0.08); color: var(--gray); }
+  .status-badge.upcoming { background: rgba(201,168,76,0.15); color: var(--gold); }
+  .status-badge.live { background: rgba(192,57,43,0.2); color: #E74C3C; animation: pulse 1.5s infinite; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  /* ─── STATS ─── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    padding: 24px 40px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .stat-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    transition: background 0.15s;
+  }
+
+  .stat-row:hover { background: rgba(255,255,255,0.02); }
+
+  .stat-rank {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    color: var(--gold);
+    width: 30px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .stat-rank.top1 { color: var(--gold-light); font-size: 26px; }
+
+  .stat-info { flex: 1; }
+
+  .stat-player {
+    font-weight: 500;
+    font-size: 14px;
+  }
+
+  .stat-team {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    color: var(--gray);
+    margin-top: 2px;
+  }
+
+  .stat-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    color: var(--white);
+    letter-spacing: 1px;
+  }
+
+  .stat-unit {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px;
+    color: var(--gray);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-align: right;
+    margin-top: 2px;
+  }
+
+  .stat-bar-wrap {
+    height: 2px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 2px;
+    margin-top: 6px;
+    overflow: hidden;
+  }
+
+  .stat-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold-dark), var(--gold));
+    border-radius: 2px;
+    transition: width 0.8s ease;
+  }
+
+  /* ─── PLAYOFF BRACKET ─── */
+  .bracket-wrap {
+    padding: 32px 40px;
+    max-width: 1400px;
+    margin: 0 auto;
+    overflow-x: auto;
+  }
+
+  .bracket {
+    display: flex;
+    gap: 40px;
+    min-width: 900px;
+    align-items: center;
+  }
+
+  .bracket-round {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    flex: 1;
+  }
+
+  .bracket-round-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 16px;
+    text-align: center;
+  }
+
+  .bracket-matchup {
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--dark);
+    margin-bottom: 16px;
+    transition: border-color 0.2s;
+  }
+
+  .bracket-matchup:hover { border-color: rgba(201,168,76,0.3); }
+
+  .bracket-team {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    transition: background 0.15s;
+  }
+
+  .bracket-team:last-child { border-bottom: none; }
+
+  .bracket-team.winner { background: rgba(201,168,76,0.06); }
+
+  .bracket-seed {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--gray);
+    width: 18px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .bracket-name {
+    font-size: 13px;
+    font-weight: 500;
+    flex: 1;
+  }
+
+  .bracket-score {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 0.5px;
+  }
+
+  .bracket-score.winner-score { color: var(--gold); }
+  .bracket-score.loser-score { color: var(--gray); }
+
+  .bracket-tbd {
+    color: rgba(255,255,255,0.2);
+    font-style: italic;
+    font-size: 12px;
+  }
+
+  .trophy-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 20px;
+  }
+
+  .trophy-icon {
+    font-size: 60px;
+    filter: drop-shadow(0 0 20px rgba(201,168,76,0.5));
+  }
+
+  .trophy-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    letter-spacing: 3px;
+    color: var(--gold);
+    text-align: center;
+  }
+
+  /* ─── POLLS ─── */
+  .poll-wrap {
+    padding: 32px 40px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .poll-card {
+    background: var(--dark);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+
+  .poll-question {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 20px 24px 4px;
+  }
+
+  .poll-meta {
+    font-size: 12px;
+    color: var(--gray);
+    padding: 4px 24px 16px;
+  }
+
+  .poll-option {
+    padding: 12px 24px;
+    border-top: 1px solid rgba(255,255,255,0.04);
+    cursor: pointer;
+    transition: background 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .poll-option:hover { background: rgba(255,255,255,0.02); }
+
+  .poll-option.voted {
+    cursor: default;
+  }
+
+  .poll-option-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  .poll-option-text {
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .poll-option-pct {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    color: var(--gold);
+  }
+
+  .poll-bar-bg {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    background: rgba(201,168,76,0.07);
+    transition: width 0.6s ease;
+  }
+
+  .poll-bar-bg.leader { background: rgba(201,168,76,0.12); }
+
+  .poll-vote-btn {
+    margin: 0 24px 20px;
+    padding: 10px 20px;
+    background: var(--gold);
+    color: var(--black);
+    border: none;
+    border-radius: 4px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .poll-vote-btn:hover { background: var(--gold-light); transform: translateY(-1px); }
+
+  /* ─── TEAMS PAGE ─── */
+  .teams-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    padding: 32px 40px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .team-card {
+    background: var(--dark);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 6px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .team-card:hover {
+    border-color: rgba(201,168,76,0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+  }
+
+  .team-card-header {
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .team-card-logo {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    color: white;
+    border: 2px solid rgba(255,255,255,0.2);
+  }
+
+  .team-card-body {
+    padding: 16px 20px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .team-card-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+
+  .team-card-conf {
+    font-size: 12px;
+    color: var(--gray);
+    margin-bottom: 14px;
+  }
+
+  .team-card-stats {
+    display: flex;
+    gap: 20px;
+  }
+
+  .team-stat {
+    text-align: center;
+  }
+
+  .team-stat-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    color: var(--gold);
+    line-height: 1;
+  }
+
+  .team-stat-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--gray);
+    text-transform: uppercase;
+  }
+
+  /* ─── ADMIN PANEL ─── */
+  .admin-wrap {
+    padding: 32px 40px;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .form-card {
+    background: var(--dark);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+
+  .form-body { padding: 24px; }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .form-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--gray);
+  }
+
+  .form-input, .form-select {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 4px;
+    padding: 10px 14px;
+    color: var(--white);
+    font-family: 'Barlow', sans-serif;
+    font-size: 14px;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+
+  .form-input:focus, .form-select:focus {
+    outline: none;
+    border-color: rgba(201,168,76,0.4);
+    background: rgba(255,255,255,0.06);
+  }
+
+  .form-select option { background: var(--dark2); color: var(--white); }
+
+  .submit-btn {
+    padding: 12px 28px;
+    background: var(--gold);
+    color: var(--black);
+    border: none;
+    border-radius: 4px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+    margin-top: 8px;
+  }
+
+  .submit-btn:hover { background: var(--gold-light); transform: translateY(-1px); }
+
+  .success-msg {
+    background: rgba(39,174,96,0.1);
+    border: 1px solid rgba(39,174,96,0.3);
+    color: var(--green);
+    padding: 12px 16px;
+    border-radius: 4px;
+    font-size: 14px;
+    margin-top: 12px;
+    display: none;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  /* ─── PAGE HEADER ─── */
+  .page-header {
+    padding: 40px 40px 0;
+    max-width: 1400px;
+    margin: 0 auto 0;
+  }
+
+  .page-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 52px;
+    letter-spacing: 3px;
+    line-height: 1;
+    color: var(--white);
+    margin-bottom: 4px;
+  }
+
+  .page-title span { color: var(--gold); }
+
+  .page-subtitle {
+    font-size: 14px;
+    color: var(--gray);
+    font-weight: 300;
+    margin-bottom: 24px;
+  }
+
+  /* ─── LIVE TICKER ─── */
+  .ticker {
+    background: var(--gold);
+    color: var(--black);
+    padding: 8px 0;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .ticker-inner {
+    display: inline-block;
+    animation: ticker 30s linear infinite;
+  }
+
+  .ticker-item {
+    display: inline-block;
+    padding: 0 40px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .ticker-item::after {
+    content: '•';
+    margin-left: 40px;
+  }
+
+  @keyframes ticker {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  /* ─── SCROLL ─── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--dark); }
+  ::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.3); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 900px) {
+    .main-grid { grid-template-columns: 1fr; padding: 20px; }
+    .nav { padding: 0 20px; }
+    .hero { padding: 50px 20px 40px; }
+    .page-header { padding: 24px 20px 0; }
+    .stats-grid { grid-template-columns: 1fr; padding: 20px; }
+    .teams-grid { padding: 20px; }
+    .admin-wrap, .poll-wrap, .bracket-wrap { padding: 20px; }
+    .form-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TICKER -->
+<div class="ticker">
+  <span class="ticker-inner">
+    <span class="ticker-item">The Legacy CFB 25 League — Season 1</span>
+    <span class="ticker-item">Week 8 Results Posted</span>
+    <span class="ticker-item">Playoffs Begin Week 14</span>
+    <span class="ticker-item">Top 25 Poll Now Open — Cast Your Vote</span>
+    <span class="ticker-item">New Roster Updates Available</span>
+    <span class="ticker-item">The Legacy CFB 25 League — Season 1</span>
+    <span class="ticker-item">Week 8 Results Posted</span>
+    <span class="ticker-item">Playoffs Begin Week 14</span>
+    <span class="ticker-item">Top 25 Poll Now Open — Cast Your Vote</span>
+    <span class="ticker-item">New Roster Updates Available</span>
+  </span>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo" onclick="showPage('home')">THE <span>LEGACY</span></div>
+  <ul class="nav-links">
+    <li><a onclick="showPage('home')" class="active" id="nav-home">Home</a></li>
+    <li><a onclick="showPage('standings')" id="nav-standings">Standings</a></li>
+    <li><a onclick="showPage('schedule')" id="nav-schedule">Schedule</a></li>
+    <li><a onclick="showPage('stats')" id="nav-stats">Stats</a></li>
+    <li><a onclick="showPage('playoffs')" id="nav-playoffs">Playoffs</a></li>
+    <li><a onclick="showPage('teams')" id="nav-teams">Teams</a></li>
+    <li><a onclick="showPage('polls')" id="nav-polls">Polls</a></li>
+    <li><a onclick="showPage('admin')" id="nav-admin">Admin</a></li>
+  </ul>
+  <div class="nav-badge">CFB 25</div>
+</nav>
+
+<!-- ══════════════ HOME PAGE ══════════════ -->
+<div id="page-home" class="page active">
+  <div class="hero">
+    <div class="hero-tag">CFB 25 Video Game League</div>
+    <h1>THE<br><em>LEGACY</em></h1>
+    <p class="hero-sub">Where legends are built. Season 1 — Now underway.</p>
+  </div>
+
+  <div class="main-grid">
+    <!-- RECENT SCORES -->
+    <div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Recent Scores</span>
+          <a class="card-link" onclick="showPage('schedule')">Full Schedule →</a>
+        </div>
+        <div class="score-card">
+          <div class="score-card-meta">Week 8 · Final</div>
+          <div class="score-row">
+            <div class="score-team"><div class="score-logo" style="background:#990000">AL</div> Alabama</div>
+            <div class="score-num winner">42</div>
+          </div>
+          <div class="score-row">
+            <div class="score-team loser-team"><div class="score-logo" style="background:#003366">FL</div> Florida</div>
+            <div class="score-num loser">17</div>
+          </div>
+          <div class="final-tag">Final</div>
+        </div>
+        <div class="score-card">
+          <div class="score-card-meta">Week 8 · Final</div>
+          <div class="score-row">
+            <div class="score-team"><div class="score-logo" style="background:#BB0000">GA</div> Georgia</div>
+            <div class="score-num winner">38</div>
+          </div>
+          <div class="score-row">
+            <div class="score-team loser-team"><div class="score-logo" style="background:#660000">SC</div> S. Carolina</div>
+            <div class="score-num loser">21</div>
+          </div>
+          <div class="final-tag">Final</div>
+        </div>
+        <div class="score-card">
+          <div class="score-card-meta">Week 8 · Final</div>
+          <div class="score-row">
+            <div class="score-team"><div class="score-logo" style="background:#002147">OSU</div> Ohio St.</div>
+            <div class="score-num winner">35</div>
+          </div>
+          <div class="score-row">
+            <div class="score-team loser-team"><div class="score-logo" style="background:#00274C">UM</div> Michigan</div>
+            <div class="score-num loser">28</div>
+          </div>
+          <div class="final-tag">Final</div>
+        </div>
+        <div class="score-card">
+          <div class="score-card-meta">Week 9 · Upcoming</div>
+          <div class="score-row">
+            <div class="score-team"><div class="score-logo" style="background:#BF5700">TX</div> Texas</div>
+            <div class="score-num" style="color:var(--gray)">—</div>
+          </div>
+          <div class="score-row">
+            <div class="score-team"><div class="score-logo" style="background:#003087">OU</div> Oklahoma</div>
+            <div class="score-num" style="color:var(--gray)">—</div>
+          </div>
+          <div class="final-tag" style="color:var(--gold)">Saturday TBD</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SIDEBAR: TOP 25 + STANDINGS PREVIEW -->
+    <div style="display:flex;flex-direction:column;gap:20px;">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Top 25 Rankings</span>
+          <a class="card-link" onclick="showPage('polls')">Vote →</a>
+        </div>
+        <div id="top25-sidebar"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Quick Standings</span>
+          <a class="card-link" onclick="showPage('standings')">Full →</a>
+        </div>
+        <table class="standings-table">
+          <thead><tr>
+            <th>#</th><th>Team</th><th>W</th><th>L</th><th>Pct</th>
+          </tr></thead>
+          <tbody id="quick-standings"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ STANDINGS PAGE ══════════════ -->
+<div id="page-standings" class="page">
+  <div class="page-header">
+    <div class="page-title">STAND<span>INGS</span></div>
+    <div class="page-subtitle">Season 1 — All Conferences</div>
+  </div>
+
+  <div style="padding:24px 40px;max-width:1400px;margin:0 auto;">
+    <div class="card" style="margin-bottom:24px;">
+      <div class="card-header">
+        <span class="card-title">SEC</span>
+      </div>
+      <div class="conf-section-header">East Division</div>
+      <table class="standings-table">
+        <thead><tr><th>#</th><th>Team</th><th>W</th><th>L</th><th>Conf</th><th>Pct</th><th>Streak</th></tr></thead>
+        <tbody id="sec-east-standings"></tbody>
+      </table>
+      <div class="conf-section-header">West Division</div>
+      <table class="standings-table">
+        <thead><tr><th>#</th><th>Team</th><th>W</th><th>L</th><th>Conf</th><th>Pct</th><th>Streak</th></tr></thead>
+        <tbody id="sec-west-standings"></tbody>
+      </table>
+    </div>
+
+    <div class="card" style="margin-bottom:24px;">
+      <div class="card-header">
+        <span class="card-title">Big Ten</span>
+      </div>
+      <table class="standings-table">
+        <thead><tr><th>#</th><th>Team</th><th>W</th><th>L</th><th>Conf</th><th>Pct</th><th>Streak</th></tr></thead>
+        <tbody id="bigten-standings"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Big 12 / ACC / Other</span>
+      </div>
+      <table class="standings-table">
+        <thead><tr><th>#</th><th>Team</th><th>W</th><th>L</th><th>Conf</th><th>Pct</th><th>Streak</th></tr></thead>
+        <tbody id="other-standings"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ SCHEDULE PAGE ══════════════ -->
+<div id="page-schedule" class="page">
+  <div class="page-header">
+    <div class="page-title">SCHED<span>ULE</span></div>
+    <div class="page-subtitle">Season 1 — Full Schedule</div>
+  </div>
+  <div style="padding:24px 40px;max-width:1000px;margin:0 auto;">
+    <div class="card" id="schedule-card"></div>
+  </div>
+</div>
+
+<!-- ══════════════ STATS PAGE ══════════════ -->
+<div id="page-stats" class="page">
+  <div class="page-header">
+    <div class="page-title">STAT<span>LEADERS</span></div>
+    <div class="page-subtitle">Season 1 — Individual Leaders</div>
+  </div>
+  <div class="stats-grid">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Passing Yards</span></div>
+      <div id="passing-stats"></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Rushing Yards</span></div>
+      <div id="rushing-stats"></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Touchdowns</span></div>
+      <div id="td-stats"></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Team Points Per Game</span></div>
+      <div id="ppg-stats"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ PLAYOFFS PAGE ══════════════ -->
+<div id="page-playoffs" class="page">
+  <div class="page-header">
+    <div class="page-title">PLAY<span>OFFS</span></div>
+    <div class="page-subtitle">Season 1 Playoff Bracket — 8 Teams</div>
+  </div>
+  <div class="bracket-wrap">
+    <div class="bracket">
+      <!-- Quarterfinals -->
+      <div class="bracket-round">
+        <div class="bracket-round-label">Quarterfinals</div>
+        <div class="bracket-matchup">
+          <div class="bracket-team winner">
+            <span class="bracket-seed">1</span>
+            <span class="bracket-name">Alabama</span>
+            <span class="bracket-score winner-score">38</span>
+          </div>
+          <div class="bracket-team">
+            <span class="bracket-seed">8</span>
+            <span class="bracket-name">USC</span>
+            <span class="bracket-score loser-score">14</span>
+          </div>
+        </div>
+        <div class="bracket-matchup">
+          <div class="bracket-team winner">
+            <span class="bracket-seed">4</span>
+            <span class="bracket-name">Ohio State</span>
+            <span class="bracket-score winner-score">31</span>
+          </div>
+          <div class="bracket-team">
+            <span class="bracket-seed">5</span>
+            <span class="bracket-name">Texas</span>
+            <span class="bracket-score loser-score">24</span>
+          </div>
+        </div>
+        <div class="bracket-matchup">
+          <div class="bracket-team winner">
+            <span class="bracket-seed">2</span>
+            <span class="bracket-name">Georgia</span>
+            <span class="bracket-score winner-score">42</span>
+          </div>
+          <div class="bracket-team">
+            <span class="bracket-seed">7</span>
+            <span class="bracket-name">Penn State</span>
+            <span class="bracket-score loser-score">28</span>
+          </div>
+        </div>
+        <div class="bracket-matchup">
+          <div class="bracket-team">
+            <span class="bracket-seed">3</span>
+            <span class="bracket-name">Michigan</span>
+            <span class="bracket-score winner-score" style="color:var(--gray)">—</span>
+          </div>
+          <div class="bracket-team">
+            <span class="bracket-seed">6</span>
+            <span class="bracket-name">Notre Dame</span>
+            <span class="bracket-score loser-score">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Semifinals -->
+      <div class="bracket-round">
+        <div class="bracket-round-label">Semifinals</div>
+        <div style="margin-top:40px;"></div>
+        <div class="bracket-matchup">
+          <div class="bracket-team winner">
+            <span class="bracket-seed">1</span>
+            <span class="bracket-name">Alabama</span>
+            <span class="bracket-score winner-score">35</span>
+          </div>
+          <div class="bracket-team">
+            <span class="bracket-seed">4</span>
+            <span class="bracket-name">Ohio State</span>
+            <span class="bracket-score loser-score">27</span>
+          </div>
+        </div>
+        <div style="margin-top:56px;"></div>
+        <div class="bracket-matchup">
+          <div class="bracket-team">
+            <span class="bracket-seed">2</span>
+            <span class="bracket-name">Georgia</span>
+            <span class="bracket-score" style="color:var(--gray)">—</span>
+          </div>
+          <div class="bracket-team">
+            <span class="bracket-seed">3</span>
+            <span class="bracket-name bracket-tbd">TBD</span>
+            <span class="bracket-score" style="color:var(--gray)">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Championship -->
+      <div class="bracket-round" style="max-width:200px;">
+        <div class="bracket-round-label">Championship</div>
+        <div style="margin-top:120px;"></div>
+        <div class="bracket-matchup">
+          <div class="bracket-team winner">
+            <span class="bracket-seed">1</span>
+            <span class="bracket-name">Alabama</span>
+            <span class="bracket-score" style="color:var(--gray)">—</span>
+          </div>
+          <div class="bracket-team">
+            <span class="bracket-seed">?</span>
+            <span class="bracket-name bracket-tbd">TBD</span>
+            <span class="bracket-score" style="color:var(--gray)">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Trophy -->
+      <div class="trophy-center">
+        <div class="trophy-icon">🏆</div>
+        <div class="trophy-label">Legacy<br>Champion</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ TEAMS PAGE ══════════════ -->
+<div id="page-teams" class="page">
+  <div class="page-header">
+    <div class="page-title">TEAM<span>S</span></div>
+    <div class="page-subtitle">Season 1 — All Franchises</div>
+  </div>
+  <div class="teams-grid" id="teams-grid"></div>
+</div>
+
+<!-- ══════════════ POLLS PAGE ══════════════ -->
+<div id="page-polls" class="page">
+  <div class="page-header">
+    <div class="page-title">POLL<span>S</span></div>
+    <div class="page-subtitle">Community Votes — Week 8</div>
+  </div>
+  <div class="poll-wrap">
+    <!-- Poll 1 -->
+    <div class="poll-card" id="poll1">
+      <div class="poll-question">Who will win the Legacy Championship?</div>
+      <div class="poll-meta">324 votes · Closes after Week 14</div>
+      <div id="poll1-options"></div>
+      <button class="poll-vote-btn" onclick="submitPoll(1)">Submit Vote</button>
+    </div>
+
+    <!-- Poll 2 -->
+    <div class="poll-card" id="poll2">
+      <div class="poll-question">Best offense in the league this season?</div>
+      <div class="poll-meta">201 votes · Open</div>
+      <div id="poll2-options"></div>
+      <button class="poll-vote-btn" onclick="submitPoll(2)">Submit Vote</button>
+    </div>
+
+    <!-- Poll 3 -->
+    <div class="poll-card" id="poll3">
+      <div class="poll-question">Who deserves the Heisman in The Legacy?</div>
+      <div class="poll-meta">178 votes · Open</div>
+      <div id="poll3-options"></div>
+      <button class="poll-vote-btn" onclick="submitPoll(3)">Submit Vote</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ ADMIN PAGE ══════════════ -->
+<div id="page-admin" class="page">
+  <div class="page-header">
+    <div class="page-title">ADMIN <span>PANEL</span></div>
+    <div class="page-subtitle">Manage scores, teams, and league data</div>
+  </div>
+  <div class="admin-wrap">
+
+    <!-- Submit Score -->
+    <div class="form-card">
+      <div class="card-header"><span class="card-title">Submit Game Result</span></div>
+      <div class="form-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Week</label>
+            <select class="form-select" id="game-week">
+              <option>Week 1</option><option>Week 2</option><option>Week 3</option>
+              <option>Week 4</option><option>Week 5</option><option>Week 6</option>
+              <option>Week 7</option><option selected>Week 8</option><option>Week 9</option>
+              <option>Week 10</option><option>Week 11</option><option>Week 12</option>
+              <option>Week 13</option><option>Week 14</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Game Type</label>
+            <select class="form-select">
+              <option>Regular Season</option>
+              <option>Conference Championship</option>
+              <option>Playoff Quarterfinal</option>
+              <option>Playoff Semifinal</option>
+              <option>Championship</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Home Team</label>
+            <select class="form-select" id="home-team-select"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Home Score</label>
+            <input type="number" class="form-input" id="home-score" placeholder="0" min="0">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Away Team</label>
+            <select class="form-select" id="away-team-select"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Away Score</label>
+            <input type="number" class="form-input" id="away-score" placeholder="0" min="0">
+          </div>
+        </div>
+        <button class="submit-btn" onclick="submitScore()">Post Result</button>
+        <div class="success-msg" id="score-success">✓ Game result posted successfully!</div>
+      </div>
+    </div>
+
+    <!-- Add Team -->
+    <div class="form-card">
+      <div class="card-header"><span class="card-title">Add / Edit Team</span></div>
+      <div class="form-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Team Name</label>
+            <input type="text" class="form-input" placeholder="e.g. Alabama Crimson Tide">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Abbreviation</label>
+            <input type="text" class="form-input" placeholder="e.g. ALA" maxlength="4">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Conference</label>
+            <select class="form-select">
+              <option>SEC</option><option>Big Ten</option><option>Big 12</option>
+              <option>ACC</option><option>Pac-12</option><option>Independent</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Team Color</label>
+            <input type="color" class="form-input" value="#990000" style="height:44px;padding:4px;">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Coach / User</label>
+            <input type="text" class="form-input" placeholder="Username">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Overall Rating</label>
+            <input type="number" class="form-input" placeholder="85" min="60" max="99">
+          </div>
+        </div>
+        <button class="submit-btn" onclick="showSuccess('team-success')">Save Team</button>
+        <div class="success-msg" id="team-success">✓ Team saved successfully!</div>
+      </div>
+    </div>
+
+    <!-- Add Stats -->
+    <div class="form-card">
+      <div class="card-header"><span class="card-title">Submit Player Stats</span></div>
+      <div class="form-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Player Name</label>
+            <input type="text" class="form-input" placeholder="Full name">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Team</label>
+            <select class="form-select" id="stat-team-select"></select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Passing Yards</label>
+            <input type="number" class="form-input" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Rushing Yards</label>
+            <input type="number" class="form-input" placeholder="0">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Touchdowns</label>
+            <input type="number" class="form-input" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Interceptions</label>
+            <input type="number" class="form-input" placeholder="0">
+          </div>
+        </div>
+        <button class="submit-btn" onclick="showSuccess('stats-success')">Save Stats</button>
+        <div class="success-msg" id="stats-success">✓ Stats saved successfully!</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ══════════════ DATA ══════════════
+const teams = [
+  { id:1, name:'Alabama', abbr:'ALA', conf:'SEC', div:'West', wins:10, losses:1, confW:7, confL:1, color:'#990000', rating:96, coach:'Coach1', ppg:38.4, streak:'W5' },
+  { id:2, name:'Georgia', abbr:'UGA', conf:'SEC', div:'East', wins:9, losses:2, confW:6, confL:2, color:'#BB0000', rating:94, coach:'Coach2', ppg:35.1, streak:'W3' },
+  { id:3, name:'Ohio State', abbr:'OSU', conf:'Big Ten', div:'East', wins:9, losses:2, confW:6, confL:2, color:'#BB0000', rating:95, coach:'Coach3', ppg:37.2, streak:'W2' },
+  { id:4, name:'Michigan', abbr:'MICH', conf:'Big Ten', div:'East', wins:8, losses:3, confW:5, confL:3, color:'#00274C', rating:91, coach:'Coach4', ppg:31.8, streak:'L1' },
+  { id:5, name:'Texas', abbr:'TEX', conf:'Big 12', div:'', wins:8, losses:3, confW:5, confL:3, color:'#BF5700', rating:90, coach:'Coach5', ppg:33.5, streak:'W1' },
+  { id:6, name:'Notre Dame', abbr:'ND', conf:'Independent', div:'', wins:7, losses:4, confW:0, confL:0, color:'#002147', rating:88, coach:'Coach6', ppg:29.4, streak:'W2' },
+  { id:7, name:'Penn State', abbr:'PSU', conf:'Big Ten', div:'East', wins:7, losses:4, confW:4, confL:4, color:'#041E42', rating:87, coach:'Coach7', ppg:27.8, streak:'L2' },
+  { id:8, name:'USC', abbr:'USC', conf:'Big Ten', div:'West', wins:6, losses:5, confW:3, confL:5, color:'#990000', rating:85, coach:'Coach8', ppg:30.1, streak:'L1' },
+  { id:9, name:'Florida', abbr:'FLA', conf:'SEC', div:'East', wins:6, losses:5, confW:3, confL:5, color:'#003366', rating:84, coach:'Coach9', ppg:24.6, streak:'L3' },
+  { id:10, name:'Oklahoma', abbr:'OKL', conf:'Big 12', div:'', wins:6, losses:5, confW:4, confL:4, color:'#841617', rating:86, coach:'Coach10', ppg:28.3, streak:'W1' },
+  { id:11, name:'LSU', abbr:'LSU', conf:'SEC', div:'West', wins:5, losses:6, confW:3, confL:5, color:'#461D7C', rating:83, coach:'Coach11', ppg:26.7, streak:'L2' },
+  { id:12, name:'S. Carolina', abbr:'SC', conf:'SEC', div:'East', wins:4, losses:7, confW:2, confL:6, color:'#73000A', rating:78, coach:'Coach12', ppg:19.8, streak:'L4' },
+];
+
+const rankings = [
+  { name:'Alabama', record:'10-1', trend:'up' },
+  { name:'Georgia', record:'9-2', trend:'same' },
+  { name:'Ohio State', record:'9-2', trend:'up' },
+  { name:'Michigan', record:'8-3', trend:'down' },
+  { name:'Texas', record:'8-3', trend:'up' },
+  { name:'Notre Dame', record:'7-4', trend:'same' },
+  { name:'Penn State', record:'7-4', trend:'down' },
+  { name:'USC', record:'6-5', trend:'same' },
+  { name:'Oklahoma', record:'6-5', trend:'up' },
+  { name:'Florida', record:'6-5', trend:'down' },
+];
+
+const schedule = [
+  { week:7, home:'Alabama', away:'LSU', homeScore:45, awayScore:14, status:'final' },
+  { week:7, home:'Georgia', away:'Florida', homeScore:31, awayScore:17, status:'final' },
+  { week:7, home:'Ohio State', away:'Penn State', homeScore:28, awayScore:21, status:'final' },
+  { week:7, home:'Michigan', away:'USC', homeScore:24, awayScore:20, status:'final' },
+  { week:8, home:'Alabama', away:'Florida', homeScore:42, awayScore:17, status:'final' },
+  { week:8, home:'Georgia', away:'S. Carolina', homeScore:38, awayScore:21, status:'final' },
+  { week:8, home:'Ohio State', away:'Michigan', homeScore:35, awayScore:28, status:'final' },
+  { week:8, home:'Texas', away:'Oklahoma', homeScore:null, awayScore:null, status:'upcoming' },
+  { week:8, home:'Notre Dame', away:'Penn State', homeScore:null, awayScore:null, status:'upcoming' },
+  { week:9, home:'Alabama', away:'Texas', homeScore:null, awayScore:null, status:'upcoming' },
+  { week:9, home:'Georgia', away:'Ohio State', homeScore:null, awayScore:null, status:'upcoming' },
+  { week:9, home:'Michigan', away:'Notre Dame', homeScore:null, awayScore:null, status:'upcoming' },
+];
+
+const passingLeaders = [
+  { name:'Drake Maye', team:'North Carolina', val:3241, max:3241 },
+  { name:'Quinn Ewers', team:'Texas', val:2987, max:3241 },
+  { name:'Carson Beck', team:'Georgia', val:2710, max:3241 },
+  { name:'Jalen Milroe', team:'Alabama', val:2543, max:3241 },
+  { name:'Will Howard', team:'Ohio State', val:2389, max:3241 },
+];
+
+const rushingLeaders = [
+  { name:'Ollie Gordon II', team:'Oklahoma', val:1312, max:1312 },
+  { name:'TreVeyon Henderson', team:'Ohio State', val:1187, max:1312 },
+  { name:'Justice Haynes', team:'Alabama', val:1043, max:1312 },
+  { name:'Trevor Etienne', team:'Georgia', val:987, max:1312 },
+  { name:'Donovan Edwards', team:'Michigan', val:904, max:1312 },
+];
+
+const tdLeaders = [
+  { name:'Jalen Milroe', team:'Alabama', val:28, max:28 },
+  { name:'Quinn Ewers', team:'Texas', val:24, max:28 },
+  { name:'Carson Beck', team:'Georgia', val:22, max:28 },
+  { name:'Will Howard', team:'Ohio State', val:21, max:28 },
+  { name:'Ollie Gordon II', team:'Oklahoma', val:19, max:28 },
+];
+
+const polls = {
+  1: { options:['Alabama','Georgia','Ohio State','Michigan'], votes:[148,92,58,26] },
+  2: { options:['Alabama','Ohio State','Texas','Georgia'], votes:[112,78,54,31] },
+  3: { options:['Jalen Milroe (ALA)','Quinn Ewers (TEX)','Carson Beck (UGA)','Ollie Gordon (OKL)'], votes:[82,51,39,22] },
+};
+
+const pollVoted = { 1:null, 2:null, 3:null };
+
+// ══════════════ NAV ══════════════
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  const navEl = document.getElementById('nav-' + page);
+  if(navEl) navEl.classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// ══════════════ RENDER FUNCTIONS ══════════════
+
+function getTeamColor(name) {
+  const t = teams.find(x => x.name === name || name.startsWith(x.name.split(' ')[0]));
+  return t ? t.color : '#555';
+}
+
+function renderTop25() {
+  const el = document.getElementById('top25-sidebar');
+  if(!el) return;
+  el.innerHTML = rankings.map((t,i) => `
+    <div class="ranking-row">
+      <div class="ranking-num ${i<3?'top3':''}">${i+1}</div>
+      <div class="ranking-info">
+        <div class="ranking-name">${t.name}</div>
+        <div class="ranking-record">${t.record}</div>
+      </div>
+      <div class="trend ${t.trend}">${t.trend==='up'?'▲':t.trend==='down'?'▼':'—'}</div>
+    </div>
+  `).join('');
+}
+
+function renderQuickStandings() {
+  const el = document.getElementById('quick-standings');
+  if(!el) return;
+  const sorted = [...teams].sort((a,b) => b.wins-a.wins || a.losses-b.losses).slice(0,6);
+  el.innerHTML = sorted.map((t,i) => `
+    <tr>
+      <td><span class="rank-num">${i+1}</span></td>
+      <td>
+        <div class="team-name-cell">
+          <div class="team-logo" style="background:${t.color}">${t.abbr.slice(0,2)}</div>
+          <div>
+            <div class="team-full-name">${t.name}</div>
+            <div class="conf-tag">${t.conf}</div>
+          </div>
+        </div>
+      </td>
+      <td>${t.wins}</td>
+      <td>${t.losses}</td>
+      <td class="pct">${(t.wins/(t.wins+t.losses)).toFixed(3)}</td>
+    </tr>
+  `).join('');
+}
+
+function renderFullStandings() {
+  const secEast = teams.filter(t=>t.conf==='SEC'&&t.div==='East').sort((a,b)=>b.wins-a.wins);
+  const secWest = teams.filter(t=>t.conf==='SEC'&&t.div==='West').sort((a,b)=>b.wins-a.wins);
+  const bigTen = teams.filter(t=>t.conf==='Big Ten').sort((a,b)=>b.wins-a.wins);
+  const other = teams.filter(t=>!['SEC','Big Ten'].includes(t.conf)).sort((a,b)=>b.wins-a.wins);
+
+  function rows(arr, elId) {
+    const el = document.getElementById(elId);
+    if(!el) return;
+    el.innerHTML = arr.map((t,i) => `
+      <tr>
+        <td><span class="rank-num">${i+1}</span></td>
+        <td>
+          <div class="team-name-cell">
+            <div class="team-logo" style="background:${t.color}">${t.abbr.slice(0,2)}</div>
+            <div>
+              <div class="team-full-name">${t.name}</div>
+              <div class="conf-tag">${t.conf}</div>
+            </div>
+          </div>
+        </td>
+        <td>${t.wins}</td>
+        <td>${t.losses}</td>
+        <td>${t.confW}-${t.confL}</td>
+        <td class="pct">${(t.wins/(t.wins+t.losses)).toFixed(3)}</td>
+        <td style="color:${t.streak.startsWith('W')?'#27AE60':'#C0392B'};font-family:'Barlow Condensed',sans-serif;font-weight:700;">${t.streak}</td>
+      </tr>
+    `).join('');
+  }
+
+  rows(secEast, 'sec-east-standings');
+  rows(secWest, 'sec-west-standings');
+  rows(bigTen, 'bigten-standings');
+  rows(other, 'other-standings');
+}
+
+function renderSchedule() {
+  const el = document.getElementById('schedule-card');
+  if(!el) return;
+  const weeks = [...new Set(schedule.map(g=>g.week))];
+  el.innerHTML = weeks.map(w => {
+    const games = schedule.filter(g=>g.week===w);
+    return `
+      <div class="week-header">Week ${w}</div>
+      ${games.map(g => {
+        const homeWin = g.homeScore > g.awayScore;
+        const isFinal = g.status === 'final';
+        return `
+          <div class="schedule-game">
+            <div class="schedule-teams">
+              <div class="schedule-team-row ${isFinal&&!homeWin?'':''}">
+                <div class="score-logo" style="background:${getTeamColor(g.home)}">${g.home.slice(0,2).toUpperCase()}</div>
+                <span style="${isFinal&&!homeWin?'opacity:0.5':''}">${g.home}</span>
+              </div>
+              <div class="schedule-team-row">
+                <div class="score-logo" style="background:${getTeamColor(g.away)}">${g.away.slice(0,2).toUpperCase()}</div>
+                <span style="${isFinal&&homeWin?'opacity:0.5':''}">${g.away}</span>
+              </div>
+            </div>
+            <div class="vs-divider">${isFinal?'':'VS'}</div>
+            <div class="schedule-score">
+              <span class="${isFinal?(homeWin?'win':'loss'):''}">${g.homeScore !== null ? g.homeScore : '—'}</span>
+              <span class="${isFinal?(!homeWin?'win':'loss'):''}">${g.awayScore !== null ? g.awayScore : '—'}</span>
+            </div>
+            <div style="width:12px;"></div>
+            <span class="status-badge ${g.status}">${g.status === 'final' ? 'Final' : g.status === 'live' ? '● Live' : 'TBD'}</span>
+          </div>
+        `;
+      }).join('')}
+    `;
+  }).join('');
+}
+
+function renderStats() {
+  function statRows(leaders, elId, unit) {
+    const el = document.getElementById(elId);
+    if(!el) return;
+    el.innerHTML = leaders.map((p,i) => `
+      <div class="stat-row">
+        <div class="stat-rank ${i===0?'top1':''}">${i+1}</div>
+        <div class="stat-info">
+          <div class="stat-player">${p.name}</div>
+          <div class="stat-team">${p.team}</div>
+          <div class="stat-bar-wrap">
+            <div class="stat-bar" style="width:${(p.val/p.max*100).toFixed(1)}%"></div>
+          </div>
+        </div>
+        <div>
+          <div class="stat-value">${p.val.toLocaleString()}</div>
+          <div class="stat-unit">${unit}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  statRows(passingLeaders, 'passing-stats', 'YDS');
+  statRows(rushingLeaders, 'rushing-stats', 'YDS');
+  statRows(tdLeaders, 'td-stats', 'TDs');
+
+  // PPG
+  const ppgEl = document.getElementById('ppg-stats');
+  if(ppgEl) {
+    const sorted = [...teams].sort((a,b)=>b.ppg-a.ppg).slice(0,5);
+    const max = sorted[0].ppg;
+    ppgEl.innerHTML = sorted.map((t,i) => `
+      <div class="stat-row">
+        <div class="stat-rank ${i===0?'top1':''}">${i+1}</div>
+        <div class="stat-info">
+          <div class="stat-player">${t.name}</div>
+          <div class="stat-team">${t.conf}</div>
+          <div class="stat-bar-wrap">
+            <div class="stat-bar" style="width:${(t.ppg/max*100).toFixed(1)}%"></div>
+          </div>
+        </div>
+        <div>
+          <div class="stat-value">${t.ppg}</div>
+          <div class="stat-unit">PPG</div>
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+function renderTeams() {
+  const el = document.getElementById('teams-grid');
+  if(!el) return;
+  el.innerHTML = teams.map(t => `
+    <div class="team-card">
+      <div class="team-card-header" style="background:linear-gradient(135deg,${t.color}22,${t.color}44)">
+        <div class="team-card-logo" style="background:${t.color}">${t.abbr}</div>
+      </div>
+      <div class="team-card-body">
+        <div class="team-card-name">${t.name}</div>
+        <div class="team-card-conf">${t.conf} · Coach: ${t.coach}</div>
+        <div class="team-card-stats">
+          <div class="team-stat">
+            <div class="team-stat-val">${t.wins}-${t.losses}</div>
+            <div class="team-stat-label">Record</div>
+          </div>
+          <div class="team-stat">
+            <div class="team-stat-val">${t.rating}</div>
+            <div class="team-stat-label">Rating</div>
+          </div>
+          <div class="team-stat">
+            <div class="team-stat-val">${t.ppg}</div>
+            <div class="team-stat-label">PPG</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderPolls() {
+  Object.keys(polls).forEach(id => {
+    const p = polls[id];
+    const total = p.votes.reduce((a,b)=>a+b,0);
+    const el = document.getElementById(`poll${id}-options`);
+    if(!el) return;
+    const maxVotes = Math.max(...p.votes);
+    el.innerHTML = p.options.map((opt,i) => {
+      const pct = Math.round(p.votes[i]/total*100);
+      const isLeader = p.votes[i] === maxVotes;
+      return `
+        <div class="poll-option ${pollVoted[id]!==null?'voted':''}" onclick="selectPoll(${id},${i})">
+          <div class="poll-bar-bg ${isLeader?'leader':''}" id="bar-${id}-${i}" style="width:${pollVoted[id]!==null?pct:0}%"></div>
+          <div class="poll-option-inner">
+            <span class="poll-option-text">${pollVoted[id]===i?'✓ ':''}<b>${opt}</b></span>
+            ${pollVoted[id]!==null?`<span class="poll-option-pct">${pct}%</span>`:''}
+          </div>
+        </div>
+      `;
+    }).join('');
+  });
+}
+
+// ══════════════ POLL INTERACTIONS ══════════════
+let pollSelections = { 1:null, 2:null, 3:null };
+
+function selectPoll(id, idx) {
+  if(pollVoted[id] !== null) return;
+  pollSelections[id] = idx;
+  const el = document.getElementById(`poll${id}-options`);
+  el.querySelectorAll('.poll-option').forEach((o,i) => {
+    o.style.background = i===idx ? 'rgba(201,168,76,0.08)' : '';
+  });
+}
+
+function submitPoll(id) {
+  if(pollSelections[id] === null) return;
+  pollVoted[id] = pollSelections[id];
+  polls[id].votes[pollSelections[id]]++;
+  renderPolls();
+  const btn = document.querySelector(`#poll${id} .poll-vote-btn`);
+  if(btn) { btn.textContent = '✓ Vote Submitted'; btn.style.background = '#27AE60'; btn.disabled = true; }
+}
+
+// ══════════════ ADMIN FUNCTIONS ══════════════
+function populateSelects() {
+  ['home-team-select','away-team-select','stat-team-select'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.innerHTML = teams.map(t=>`<option>${t.name}</option>`).join('');
+  });
+}
+
+function submitScore() {
+  const home = document.getElementById('home-score').value;
+  const away = document.getElementById('away-score').value;
+  if(!home || !away) return;
+  showSuccess('score-success');
+  document.getElementById('home-score').value = '';
+  document.getElementById('away-score').value = '';
+}
+
+function showSuccess(id) {
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 3000);
+}
+
+// ══════════════ INIT ══════════════
+renderTop25();
+renderQuickStandings();
+renderFullStandings();
+renderSchedule();
+renderStats();
+renderTeams();
+renderPolls();
+populateSelects();
+</script>
+</body>
+</html>
