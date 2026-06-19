@@ -126,17 +126,17 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
 <script>
 const SUPABASE_URL = 'https://jwixyqveuspjhheghusu.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_--gUNDkNfa56zBlY3M4VIw_W_XcWeLf';
 
-async function _decompress(b64){
+function _decompress(b64){
   try{
     const bin=atob(b64);
     const bytes=new Uint8Array(bin.length);
     for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
-    const s=new ReadableStream({start(c){c.enqueue(bytes);c.close();}}).pipeThrough(new DecompressionStream('deflate-raw'));
-    return await new Response(s).text();
+    return pako.inflateRaw(bytes,{to:'string'});
   }catch(e){return null;}
 }
 async function fetchState(){
@@ -151,7 +151,7 @@ async function fetchState(){
     if(!rows||!rows.length||!rows[0].data) return null;
     const raw = rows[0].data;
     if(typeof raw==='string'&&raw.startsWith('DEFLATE:')){
-      const json=await _decompress(raw.slice(8));
+      const json=_decompress(raw.slice(8));
       return json ? JSON.parse(json) : null;
     }
     return typeof raw==='string' ? JSON.parse(raw) : raw;

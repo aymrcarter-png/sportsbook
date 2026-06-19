@@ -105,6 +105,7 @@ body{
   <div style="margin-top:8px;font-size:11px;color:rgba(201,168,76,0.3);">Add ?test=1 to URL to show this panel. Hide it in OBS for live stream.</div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
 <script>
 const SUPABASE_URL='https://jwixyqveuspjhheghusu.supabase.co';
 const SUPABASE_KEY='sb_publishable_--gUNDkNfa56zBlY3M4VIw_W_XcWeLf';
@@ -145,13 +146,27 @@ let lastState=null;
 let initialized=false;
 const DISMISS_DURATION=6000; // ms
 
+function _decompress(b64){
+  try{
+    const bin=atob(b64);
+    const bytes=new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
+    return pako.inflateRaw(bytes,{to:'string'});
+  }catch(e){return null;}
+}
 async function fetchState(){
   try{
     const res=await fetch(`${SUPABASE_URL}/rest/v1/gamestate?id=eq.1&select=data`,{
       headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
     });
     const rows=await res.json();
-    return rows&&rows.length?rows[0].data:null;
+    if(!rows||!rows.length||!rows[0].data)return null;
+    const raw=rows[0].data;
+    if(typeof raw==='string'&&raw.startsWith('DEFLATE:')){
+      const json=_decompress(raw.slice(8));
+      return json?JSON.parse(json):null;
+    }
+    return typeof raw==='string'?JSON.parse(raw):raw;
   }catch(e){return null;}
 }
 
