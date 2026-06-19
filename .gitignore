@@ -1,6 +1,8 @@
 # Ignore everything
 *
 
-# Except index.html
+# Except these files
 !index.html
+!ticker-overlay.html
+!bet-overlay.html
 !.gitignore

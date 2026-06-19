@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>The Legacy — Bet Overlay</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  background:transparent;
+  overflow:hidden;
+  width:1920px;
+  height:1080px;
+  font-family:'Barlow Condensed',sans-serif;
+}
+
+/* Alert container — top right */
+#alert-container{
+  position:fixed;
+  top:20px;
+  right:20px;
+  width:380px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  z-index:100;
+}
+
+/* Individual alert card */
+.bet-alert{
+  background:linear-gradient(135deg,rgba(10,26,10,0.97),rgba(20,55,20,0.97));
+  border:1px solid rgba(201,168,76,0.5);
+  border-radius:12px;
+  padding:0;
+  overflow:hidden;
+  position:relative;
+  transform:translateX(420px);
+  opacity:0;
+  transition:transform 0.45s cubic-bezier(0.34,1.56,0.64,1), opacity 0.35s ease;
+}
+.bet-alert.show{transform:translateX(0);opacity:1;}
+.bet-alert.hide{transform:translateX(420px);opacity:0;transition:transform 0.35s ease, opacity 0.3s ease;}
+
+/* Top accent bar */
+.alert-accent{height:3px;width:100%;}
+.accent-placed{background:linear-gradient(90deg,#1b5e20,#c9a84c,#e8c96a);}
+.accent-won{background:linear-gradient(90deg,#1b5e20,#81c784,#a5d6a7);}
+.accent-lost{background:linear-gradient(90deg,#b71c1c,#ef5350,#ef9a9a);}
+.accent-parlay{background:linear-gradient(90deg,#4a148c,#ab47bc,#ce93d8);}
+
+.alert-body{padding:12px 14px;}
+
+/* Header row */
+.alert-header{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.alert-helmet{flex-shrink:0;}
+.alert-player-name{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:#e8dcc8;flex:1;}
+.alert-type-badge{font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:3px 10px;border-radius:20px;flex-shrink:0;}
+.badge-placed{background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.35);color:#c9a84c;}
+.badge-won{background:rgba(76,175,80,0.15);border:1px solid rgba(76,175,80,0.35);color:#81c784;}
+.badge-lost{background:rgba(198,40,40,0.15);border:1px solid rgba(198,40,40,0.35);color:#ef9a9a;}
+.badge-parlay{background:rgba(171,71,188,0.15);border:1px solid rgba(171,71,188,0.35);color:#ce93d8;}
+
+/* Bet details */
+.alert-bet-label{font-size:15px;font-weight:600;color:#e8dcc8;margin-bottom:4px;}
+.alert-bet-meta{display:flex;align-items:center;gap:12px;font-size:13px;color:rgba(201,168,76,0.6);}
+.alert-amount{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;}
+.amount-placed{color:#c9a84c;}
+.amount-won{color:#81c784;}
+.amount-lost{color:#ef9a9a;}
+
+/* Result banner for settled bets */
+.alert-result{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;margin-top:2px;}
+.result-won{background:rgba(76,175,80,0.12);}
+.result-lost{background:rgba(198,40,40,0.12);}
+.result-text{font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;}
+.result-won .result-text{color:#81c784;}
+.result-lost .result-text{color:#ef9a9a;}
+.result-payout{font-size:1.2rem;font-weight:700;font-family:'Playfair Display',serif;}
+.result-won .result-payout{color:#81c784;}
+.result-lost .result-payout{color:#ef9a9a;}
+
+/* Progress bar for auto-dismiss */
+.alert-timer{position:absolute;bottom:0;left:0;height:2px;background:rgba(201,168,76,0.4);border-radius:0 0 12px 12px;animation:timerDrain linear forwards;}
+@keyframes timerDrain{from{width:100%;}to{width:0%;}}
+
+/* Parlay legs */
+.parlay-legs{font-size:12px;color:rgba(201,168,76,0.5);margin-top:3px;line-height:1.6;}
+
+/* Icon */
+.alert-icon{font-size:1.3rem;flex-shrink:0;}
+</style>
+</head>
+<body>
+<div id="alert-container"></div>
+<!-- TEST PANEL - only shows when ?test=1 in URL -->
+<div id="test-panel" style="display:none;position:fixed;bottom:20px;right:20px;background:rgba(10,26,10,0.97);border:1px solid rgba(201,168,76,0.4);border-radius:10px;padding:14px;z-index:200;width:260px;">
+  <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:rgba(201,168,76,0.5);margin-bottom:10px;">🧪 Test Mode</div>
+  <div style="display:flex;flex-direction:column;gap:6px;">
+    <button onclick="testPlaced()" style="padding:7px 12px;border-radius:6px;border:1px solid rgba(201,168,76,0.3);background:transparent;color:#c9a84c;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;cursor:pointer;text-align:left;">🎲 Simulate bet placed</button>
+    <button onclick="testParlay()" style="padding:7px 12px;border-radius:6px;border:1px solid rgba(171,71,188,0.4);background:transparent;color:#ce93d8;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;cursor:pointer;text-align:left;">🎰 Simulate parlay placed</button>
+    <button onclick="testWon()" style="padding:7px 12px;border-radius:6px;border:1px solid rgba(76,175,80,0.4);background:transparent;color:#81c784;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;cursor:pointer;text-align:left;">🏆 Simulate bet won</button>
+    <button onclick="testLost()" style="padding:7px 12px;border-radius:6px;border:1px solid rgba(198,40,40,0.4);background:transparent;color:#ef9a9a;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;cursor:pointer;text-align:left;">💸 Simulate bet lost</button>
+    <button onclick="testAll()" style="padding:7px 12px;border-radius:6px;border:1px solid rgba(201,168,76,0.3);background:rgba(201,168,76,0.08);color:#c9a84c;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;cursor:pointer;text-align:left;">⚡ Fire all at once</button>
+  </div>
+  <div style="margin-top:8px;font-size:11px;color:rgba(201,168,76,0.3);">Add ?test=1 to URL to show this panel. Hide it in OBS for live stream.</div>
+</div>
+
+<script>
+const SUPABASE_URL='https://jwixyqveuspjhheghusu.supabase.co';
+const SUPABASE_KEY='sb_publishable_--gUNDkNfa56zBlY3M4VIw_W_XcWeLf';
+
+const COLORS=[
+  ['#1a472a','#2ecc71'],['#1a237e','#5c6bc0'],['#4a148c','#ab47bc'],
+  ['#b71c1c','#ef5350'],['#e65100','#ffa726'],['#004d40','#26a69a'],
+  ['#1b5e20','#66bb6a'],['#880e4f','#ec407a'],['#0d47a1','#42a5f5'],
+  ['#33691e','#9ccc65'],['#f57f17','#ffee58'],['#37474f','#78909c'],
+];
+function pColor(name){
+  let h=0;for(let i=0;i<name.length;i++)h=(h*31+name.charCodeAt(i))&0xffffffff;
+  const c=COLORS[Math.abs(h)%COLORS.length];return{bg:c[0],ac:c[1]};
+}
+function helmetSVG(name,sz){
+  const{bg,ac}=pColor(name);
+  return`<svg width="${sz}" height="${sz}" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="20" cy="20" r="20" fill="${bg}"/>
+    <ellipse cx="20" cy="22" rx="13" ry="11" fill="${ac}"/>
+    <path d="M7 22 Q7 9 20 9 Q33 9 33 22" fill="${ac}"/>
+    <path d="M11 25 Q11 32 17 33" stroke="${bg}" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M13 27 Q13 33 19 34" stroke="${bg}" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M20 9 Q21 15 21 22 Q21 28 20 33" stroke="${bg}" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <circle cx="8" cy="24" r="2.5" fill="${bg}"/>
+    <path d="M17 33 Q20 35 23 33" stroke="${bg}" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M13 16 Q17 13 23 14" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/>
+  </svg>`;
+}
+
+function fmtOdds(o){
+  o=parseFloat(o);if(isNaN(o))return'';
+  return o>0?'+'+o:''+o;
+}
+
+// Track known bets to detect new ones
+let knownBetIds=new Set();
+let lastState=null;
+let initialized=false;
+const DISMISS_DURATION=6000; // ms
+
+async function fetchState(){
+  try{
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/gamestate?id=eq.1&select=data`,{
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
+    });
+    const rows=await res.json();
+    return rows&&rows.length?rows[0].data:null;
+  }catch(e){return null;}
+}
+
+function showAlert(type, bet, state){
+  const container=document.getElementById('alert-container');
+  const player=bet.player;
+  const isParlay=bet.isParlay;
+  const DURATION=type==='placed'?DISMISS_DURATION:DISMISS_DURATION+2000;
+
+  // Determine accent/badge class
+  let accentClass='accent-placed', badgeClass='badge-placed', badgeText='New Bet', icon='🎲';
+  if(isParlay&&type==='placed'){accentClass='accent-parlay';badgeClass='badge-parlay';badgeText='Parlay';icon='🎰';}
+  else if(type==='won'){accentClass='accent-won';badgeClass='badge-won';badgeText='Winner!';icon='🏆';}
+  else if(type==='lost'){accentClass='accent-lost';badgeClass='badge-lost';badgeText='Lost';icon='💸';}
+
+  const label=isParlay?`${bet.legs?.length||'?'}-Leg Parlay`:(bet.label||'Bet');
+  const odds=bet.odds?` (${fmtOdds(bet.odds)})`:'';
+  const wager=bet.wager||0;
+  const toWin=bet.toWin||0;
+
+  // Game name
+  const game=state?.games?.find(g=>g.id==bet.gameId);
+  const gameName=game?`${game.home} vs ${game.away}`:'';
+
+  // Parlay legs
+  const legStr=isParlay&&bet.legs?bet.legs.map(l=>`${l.label} ${fmtOdds(l.odds)}`).join(' · '):'';
+
+  // Result section
+  let resultHtml='';
+  if(type==='won'){
+    resultHtml=`<div class="alert-result result-won">
+      <div class="result-text">🏆 Won!</div>
+      <div class="result-payout">+$${toWin.toLocaleString()}</div>
+    </div>`;
+  } else if(type==='lost'){
+    resultHtml=`<div class="alert-result result-lost">
+      <div class="result-text">💸 Lost</div>
+      <div class="result-payout">-$${wager.toLocaleString()}</div>
+    </div>`;
+  }
+
+  const el=document.createElement('div');
+  el.className='bet-alert';
+  el.innerHTML=`
+    <div class="alert-accent ${accentClass}"></div>
+    <div class="alert-body">
+      <div class="alert-header">
+        <div class="alert-helmet">${helmetSVG(player,38)}</div>
+        <div class="alert-player-name">${player}</div>
+        <div class="alert-type-badge ${badgeClass}">${icon} ${badgeText}</div>
+      </div>
+      <div class="alert-bet-label">${label}${odds}</div>
+      ${gameName?`<div style="font-size:12px;color:rgba(201,168,76,0.45);margin-bottom:4px;">${gameName}</div>`:''}
+      ${legStr?`<div class="parlay-legs">${legStr}</div>`:''}
+      <div class="alert-bet-meta">
+        ${type==='placed'?`<span>Wager: <span class="alert-amount amount-placed">$${wager.toLocaleString()}</span></span>
+          <span>To win: <span class="alert-amount amount-placed">$${toWin.toLocaleString()}</span></span>`:''}
+        ${type==='won'?`<span>Wagered: $${wager.toLocaleString()}</span>`:''}
+        ${type==='lost'?`<span>Wagered: $${wager.toLocaleString()}</span>`:''}
+      </div>
+    </div>
+    ${resultHtml}
+    <div class="alert-timer" style="animation-duration:${DURATION}ms;"></div>
+  `;
+
+  container.insertBefore(el, container.firstChild);
+  void el.offsetWidth;
+  el.classList.add('show');
+
+  // Auto dismiss
+  setTimeout(()=>{
+    el.classList.remove('show');
+    el.classList.add('hide');
+    setTimeout(()=>el.remove(), 400);
+  }, DURATION);
+}
+
+async function poll(){
+  const state=await fetchState();
+  if(!state){setTimeout(poll,3000);return;}
+
+  const bets=state.bets||[];
+
+  if(!initialized){
+    // First load — just record all existing bet IDs and statuses
+    bets.forEach(b=>{
+      knownBetIds.add(b.id+'_'+b.status);
+    });
+    lastState=state;
+    initialized=true;
+    setTimeout(poll,3000);
+    return;
+  }
+
+  // Check for new bets (placed)
+  bets.forEach(b=>{
+    const openKey=b.id+'_open';
+    const settledKey=b.id+'_'+b.status;
+
+    if(!knownBetIds.has(openKey)&&!knownBetIds.has(settledKey)){
+      // Brand new bet
+      knownBetIds.add(openKey);
+      if(b.status==='open'){
+        showAlert('placed', b, state);
+      }
+    }
+
+    // Check for newly settled bets
+    if(!knownBetIds.has(settledKey)&&(b.status==='won'||b.status==='lost')){
+      knownBetIds.add(settledKey);
+      showAlert(b.status, b, state);
+    }
+  });
+
+  lastState=state;
+  setTimeout(poll, 3000); // Poll every 3 seconds
+}
+
+
+// ── TEST FUNCTIONS ──
+const TEST_PLAYERS=['Cart','Buck','KC','Daryle','Slick','Ant','Tunez'];
+const TEST_GAMES=[
+  {id:1,home:'Clemson',away:'Georgia'},
+  {id:2,home:'Alabama',away:'Ohio State'},
+  {id:3,home:'Michigan',away:'Penn State'},
+];
+const TEST_LABELS=['Clemson -3','Georgia +3','Alabama ML','Ohio State +7','Over 52.5','Under 48'];
+
+function rnd(arr){return arr[Math.floor(Math.random()*arr.length)];}
+
+function testPlaced(){
+  const player=rnd(TEST_PLAYERS);
+  const game=rnd(TEST_GAMES);
+  const label=rnd(TEST_LABELS);
+  const wager=Math.round((Math.random()*200+25)/5)*5;
+  const toWin=Math.round(wager*0.9);
+  showAlert('placed',{id:Date.now(),player,gameId:game.id,label,odds:-110,wager,toWin,status:'open'},
+    {games:TEST_GAMES});
+}
+
+function testParlay(){
+  const player=rnd(TEST_PLAYERS);
+  const legs=[
+    {label:'Clemson -3',odds:-110},
+    {label:'Alabama ML',odds:-140},
+    {label:'Over 52.5',odds:-110},
+  ];
+  const wager=Math.round((Math.random()*100+25)/5)*5;
+  const toWin=Math.round(wager*5.2);
+  showAlert('placed',{id:Date.now(),player,isParlay:true,legs,label:'3-Leg Parlay',wager,toWin,multiplier:6.2,status:'open'},
+    {games:TEST_GAMES});
+}
+
+function testWon(){
+  const player=rnd(TEST_PLAYERS);
+  const game=rnd(TEST_GAMES);
+  const label=rnd(TEST_LABELS);
+  const wager=Math.round((Math.random()*150+25)/5)*5;
+  const toWin=Math.round(wager*0.9);
+  showAlert('won',{id:Date.now(),player,gameId:game.id,label,odds:-110,wager,toWin,status:'won'},
+    {games:TEST_GAMES});
+}
+
+function testLost(){
+  const player=rnd(TEST_PLAYERS);
+  const game=rnd(TEST_GAMES);
+  const label=rnd(TEST_LABELS);
+  const wager=Math.round((Math.random()*150+25)/5)*5;
+  showAlert('lost',{id:Date.now(),player,gameId:game.id,label,odds:-110,wager,toWin:0,status:'lost'},
+    {games:TEST_GAMES});
+}
+
+function testAll(){
+  testPlaced();
+  setTimeout(testWon,400);
+  setTimeout(testParlay,800);
+  setTimeout(testLost,1200);
+}
+
+// Show test panel if ?test=1 in URL
+if(window.location.search.includes('test=1')){
+  document.getElementById('test-panel').style.display='block';
+  // Auto-fire a test alert after 1 second so you can see it immediately
+  setTimeout(()=>testPlaced(), 1000);
+}
+
+// Start polling
+poll();
+</script>
+</body>
+</html>
