@@ -130,6 +130,15 @@
 const SUPABASE_URL = 'https://jwixyqveuspjhheghusu.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_--gUNDkNfa56zBlY3M4VIw_W_XcWeLf';
 
+async function _decompress(b64){
+  try{
+    const bin=atob(b64);
+    const bytes=new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
+    const s=new ReadableStream({start(c){c.enqueue(bytes);c.close();}}).pipeThrough(new DecompressionStream('deflate-raw'));
+    return await new Response(s).text();
+  }catch(e){return null;}
+}
 async function fetchState(){
   try{
     const res = await fetch(`${SUPABASE_URL}/rest/v1/gamestate?id=eq.1&select=data`, {
@@ -139,7 +148,13 @@ async function fetchState(){
       }
     });
     const rows = await res.json();
-    return rows && rows.length ? rows[0].data : null;
+    if(!rows||!rows.length||!rows[0].data) return null;
+    const raw = rows[0].data;
+    if(typeof raw==='string'&&raw.startsWith('DEFLATE:')){
+      const json=await _decompress(raw.slice(8));
+      return json ? JSON.parse(json) : null;
+    }
+    return typeof raw==='string' ? JSON.parse(raw) : raw;
   }catch(e){
     console.error('Fetch error:', e);
     return null;
