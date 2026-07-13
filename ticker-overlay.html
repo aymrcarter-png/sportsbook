@@ -233,11 +233,15 @@ function buildTicker(state){
     items.push(`<span class="ticker-item"><span class="ti-cat">🔥 BOTW</span><span class="ti-gold">${b.label}</span> <span style="opacity:0.7;">${b.game}</span> <span class="ti-gold">${fmtOdds(b.odds)}</span></span>`);
   }
 
-  // 6. Recent bets (last 8, within 7 days)
+  // 6. Recent bets — open always show; settled only within 3 days of placement
   if(state.bets && state.bets.length){
-    const _cutoff = Date.now() - 7*24*60*60*1000;
+    const _3d = Date.now() - 3*24*60*60*1000;
     const recentBets = [...state.bets]
-      .filter(b => (state.names||[]).includes(b.player) && new Date(b.time||0).getTime() >= _cutoff)
+      .filter(b => {
+        if(!(state.names||[]).includes(b.player)) return false;
+        if(b.status==='open') return true;
+        return new Date(b.time||0).getTime() >= _3d;
+      })
       .sort((a,b) => new Date(b.time||0) - new Date(a.time||0))
       .slice(0,8);
     recentBets.forEach(b => {
