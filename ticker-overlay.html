@@ -233,23 +233,33 @@ function buildTicker(state){
     items.push(`<span class="ticker-item"><span class="ti-cat">🔥 BOTW</span><span class="ti-gold">${b.label}</span> <span style="opacity:0.7;">${b.game}</span> <span class="ti-gold">${fmtOdds(b.odds)}</span></span>`);
   }
 
-  // 6. Recent bets — open always show; settled only within 3 days of placement
+  // 6. Recent bets — open always show; settled only after cutoff or within 3 days
   if(state.bets && state.bets.length){
     const _3d = Date.now() - 3*24*60*60*1000;
+    const _cutoff = Math.max((state.tickerSettings||{}).betCutoff||0, _3d);
+    const _betTs = b => typeof b.id==='number' ? b.id : parseInt(String(b.id).replace(/\D/g,''))||0;
     const recentBets = [...state.bets]
       .filter(b => {
         if(!(state.names||[]).includes(b.player)) return false;
         if(b.status==='open') return true;
-        return new Date(b.time||0).getTime() >= _3d;
+        return _betTs(b) >= _cutoff;
       })
-      .sort((a,b) => new Date(b.time||0) - new Date(a.time||0))
+      .sort((a,b) => _betTs(b) - _betTs(a))
       .slice(0,8);
     recentBets.forEach(b => {
       const icon = b.isParlay ? '🎰' : b.status==='won' ? '🏆' : b.status==='lost' ? '💸' : '🎲';
-      const label = b.isParlay ? `${b.legs?.length||'?'}-Leg Parlay` : b.label||'Bet';
       const amt = b.status==='won' ? `+$${b.toWin}` : b.status==='lost' ? `-$${b.wager}` : `$${b.wager} to win $${b.toWin}`;
+      const oddsStr = b.odds!=null ? ` (${fmtOdds(b.odds)})` : '';
+      let detail = '';
+      if(b.isParlay && b.legs && b.legs.length){
+        detail = ' · ' + b.legs.map(l=>l.label||'').filter(Boolean).join(' · ');
+      } else {
+        const g = (state.games||[]).find(g=>g.id==b.gameId);
+        if(g) detail = ` · ${g.home} vs ${g.away}`;
+      }
+      const label = b.isParlay ? `${b.legs?.length||'?'}-Leg Parlay` : b.label||'Bet';
       const statusColor = b.status==='won' ? '#81c784' : b.status==='lost' ? '#ef9a9a' : '#c9a84c';
-      items.push(`<span class="ticker-item"><span class="ti-cat">${icon} Bet</span><span class="ti-gold">${b.player}</span> — ${label} — <span style="color:${statusColor};font-weight:700;">${amt}</span></span>`);
+      items.push(`<span class="ticker-item"><span class="ti-cat">${icon} Bet</span><span class="ti-gold">${b.player}</span> — ${label}${oddsStr}${detail} — <span style="color:${statusColor};font-weight:700;">${amt}</span></span>`);
     });
   }
 
