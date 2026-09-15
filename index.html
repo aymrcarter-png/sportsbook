@@ -3629,10 +3629,22 @@ async function saveData(){
   }
   while(_saveInProgress){await new Promise(r=>setTimeout(r,200));}
   _saveInProgress=true;
-  // Always merge open bets from server before writing — any tab/user's save will preserve bets placed concurrently
+  // Capture this tab's own house value before merging so re-running the merge on a
+  // version-conflict retry stays idempotent (balances use _balanceBaseline the same way).
+  const _houseLocalAtStart = state.houseMoney;
+  let _committedVersion=null, _writeOk=false, _saveLastErr=null;
+  setSyncStatus('sb','Saving...','');
+  setSyncStatus('st','Saving...','');
   try{
-    const _mv=await sbFetch('/rest/v1/'+SUPABASE_TABLE+'?id=eq.1&select=data');
-    if(_mv&&_mv.length&&_mv[0].data){
+    // Optimistic concurrency: read + merge + write, and if another device saved in between
+    // (row version changed), re-read/re-merge and retry so no write is ever silently lost.
+    for(let _attempt=0; _attempt<6 && !_writeOk; _attempt++){
+    let _readVersion=null;
+    try{
+    const _mv=await sbFetch('/rest/v1/'+SUPABASE_TABLE+'?id=eq.1&select=data,version');
+    if(_mv&&_mv.length){
+      if(_mv[0].version!=null)_readVersion=_mv[0].version;
+      if(_mv[0].data){
       const _mr=_mv[0].data;let _ms;
       if(typeof _mr==='string'&&_mr.startsWith('DEFLATE:')){const _mj=await _lsbDecompress(_mr.slice(8));if(_mj)_ms=JSON.parse(_mj);}
       else if(typeof _mr==='string'){_ms=JSON.parse(_mr);}
@@ -3731,7 +3743,7 @@ async function saveData(){
         });
       }
       // House money: keep the higher of the two so concurrent additions aren't lost.
-      if(_ms&&typeof _ms.houseMoney==='number'){ state.houseMoney=Math.max(0,Math.max(state.houseMoney||0,_ms.houseMoney)-_houseDecrease); }
+      if(_ms&&typeof _ms.houseMoney==='number'){ state.houseMoney=Math.max(0,Math.max((_houseLocalAtStart||0),_ms.houseMoney)-_houseDecrease); }
       // Union delete-tombstones so a stale save can't drop a recent deletion (which would resurrect the item).
       ['deletedBetIds','deletedScheduleIds','deletedPropIds','deletedResultIds','deletedStoreItemIds','deletedGameIds','deletedSurvivorPoolIds'].forEach(function(k){
         if(_ms&&Array.isArray(_ms[k])){ if(!state[k])state[k]=[]; const _seen=new Set(state[k].map(String)); _ms[k].forEach(function(id){ if(!_seen.has(String(id))){ state[k].push(id); _seen.add(String(id)); } }); if(state[k].length>3000)state[k]=state[k].slice(-3000); }
@@ -3763,6 +3775,8 @@ async function saveData(){
             // from another tab/settlement is preserved instead of overwritten.
             const _base=_balanceBaseline[name];
             if(_base!=null&&sp.balance!=null) state.players[name].balance=Math.round(sp.balance+((state.players[name].balance||0)-_base));
+            // Re-base onto the server value we just merged so a retry can't apply our delta twice.
+            if(sp.balance!=null) _balanceBaseline[name]=sp.balance;
           }
           // Adopt the server's team rating / look for any player this tab didn't
           // just edit, so a stale whole-object write can't revert someone's change.
@@ -3805,24 +3819,36 @@ async function saveData(){
           if(!_localSettingsDirty.has(k)&&_ms[k]!==undefined) state[k]=_ms[k];
         });
       }
+      }
     }
-  }catch(_me){}
-  if(state.auditLog&&state.auditLog.length>200)state.auditLog=state.auditLog.slice(-200);
-  if(state.autoBackups&&state.autoBackups.length>3)state.autoBackups=state.autoBackups.slice(-3);
-  setSyncStatus('sb','Saving...','');
-  setSyncStatus('st','Saving...','');
-  try{
+    }catch(_me){}
+    if(state.auditLog&&state.auditLog.length>200)state.auditLog=state.auditLog.slice(-200);
+    if(state.autoBackups&&state.autoBackups.length>3)state.autoBackups=state.autoBackups.slice(-3);
     const newVersion=Date.now();
     const compressed=await _lsbCompress(JSON.stringify(state));
     const dataPayload=compressed?'DEFLATE:'+compressed:state;
-    const hdrs={'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'};
-    const [res1,res2]=await Promise.all([
-      fetch(SUPABASE_URL+'/rest/v1/'+SUPABASE_TABLE,{method:'POST',headers:hdrs,body:JSON.stringify({id:1,data:dataPayload})}),
-      fetch(SUPABASE_URL+'/rest/v1/'+SUPABASE_TABLE,{method:'POST',headers:hdrs,body:JSON.stringify({id:2,data:{v:newVersion}})})
-    ]);
-    const ok1=res1.ok||res1.status===204||res1.status===201;
-    const ok2=res2.ok||res2.status===204||res2.status===201;
-    if(ok1&&ok2){
+    const _wh={'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'};
+    if(_readVersion==null){
+      // No version to guard on (row missing or read failed) — fall back to a plain upsert.
+      const res=await fetch(SUPABASE_URL+'/rest/v1/'+SUPABASE_TABLE,{method:'POST',headers:{..._wh,'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({id:1,data:dataPayload,version:newVersion})});
+      if(res.ok||res.status===204||res.status===201){_writeOk=true;_committedVersion=newVersion;}
+      else{_saveLastErr=res.status+' '+(await res.text().catch(()=>'')).slice(0,60);break;}
+    }else{
+      // Compare-and-swap: the write only lands if the row version still matches what we read.
+      // If not (another device saved first), the loop re-reads, re-merges and retries.
+      const res=await fetch(SUPABASE_URL+'/rest/v1/'+SUPABASE_TABLE+'?id=eq.1&version=eq.'+_readVersion+'&select=id',{method:'PATCH',headers:{..._wh,'Prefer':'return=representation'},body:JSON.stringify({data:dataPayload,version:newVersion})});
+      if(res.ok){
+        let _rows=null; try{_rows=await res.json();}catch(_){_rows=null;}
+        if(Array.isArray(_rows)&&_rows.length){_writeOk=true;_committedVersion=newVersion;}
+        else{_saveLastErr='version conflict — retrying';}
+      }else{_saveLastErr=res.status+' '+(await res.text().catch(()=>'')).slice(0,60);break;}
+    }
+    if(_writeOk){
+      // Mirror the version into row id=2 so the ticker/bet overlay pages still detect updates.
+      try{await fetch(SUPABASE_URL+'/rest/v1/'+SUPABASE_TABLE,{method:'POST',headers:{..._wh,'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({id:2,data:{v:_committedVersion},version:_committedVersion})});}catch(_){}
+    }
+    }
+    if(_writeOk){
       _localBalanceDirty.clear();
       _localSettingsDirty.clear();
       _localPlayerDirty.clear();
@@ -3831,7 +3857,7 @@ async function saveData(){
       _localArchiveDirty=false;
       _houseDecrease=0;
       _snapshotBalances(); // balances just written are the new baseline for delta merges
-      _lsbSetCache(state,newVersion);
+      _lsbSetCache(state,_committedVersion);
       _lastSaveTime=Date.now();
       if(_lsbBroadcastChannel)_lsbBroadcastChannel.send({type:'broadcast',event:'state-updated',payload:{}});
       const t=new Date().toLocaleTimeString();
@@ -3839,13 +3865,12 @@ async function saveData(){
       setSyncStatus('st','Saved ✓ '+t,'');
       return true;
     }else{
-      const err=ok1?await res2.text():await res1.text();
-      throw new Error((ok1?res2.status:res1.status)+' '+err.slice(0,60));
+      throw new Error(_saveLastErr||'save failed after retries');
     }
   }catch(e){
     console.error('Save error:',e);
-    setSyncStatus('sb','Sync error: '+e.message.slice(0,50),'sync-err');
-    setSyncStatus('st','Sync error: '+e.message.slice(0,50),'sync-err');
+    setSyncStatus('sb','Sync error: '+String(e&&e.message||e).slice(0,50),'sync-err');
+    setSyncStatus('st','Sync error: '+String(e&&e.message||e).slice(0,50),'sync-err');
     return false;
   }finally{
     _saveInProgress=false;
