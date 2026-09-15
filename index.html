@@ -3763,6 +3763,25 @@ async function saveData(){
           }
         });
       }
+      // Merge the balance log so a stale tab's save can't wipe ledger entries another
+      // device just wrote (payouts, refunds, corrections). Union by id (new entries) or a
+      // composite key (legacy rows), keep chronological, cap to the most recent 2000.
+      if(_ms&&Array.isArray(_ms.balanceLog)){
+        if(!state.balanceLog)state.balanceLog=[];
+        const _blKey=e=>(e&&e.id!=null)?('#'+e.id):[e&&e.player,e&&e.time,e&&e.amount,e&&e.desc,e&&e.balance].join('|');
+        const _blSeen=new Set(state.balanceLog.map(_blKey));
+        _ms.balanceLog.forEach(e=>{const k=_blKey(e);if(!_blSeen.has(k)){state.balanceLog.push(e);_blSeen.add(k);}});
+        state.balanceLog.sort((a,b)=>(a.time||0)-(b.time||0));
+        if(state.balanceLog.length>2000)state.balanceLog=state.balanceLog.slice(-2000);
+      }
+      // Same for the admin audit log — union by id so concurrent saves don't drop entries.
+      if(_ms&&Array.isArray(_ms.auditLog)){
+        if(!state.auditLog)state.auditLog=[];
+        const _alKey=e=>(e&&e.id!=null)?('#'+e.id):[e&&e.type,e&&e.time,e&&e.action,e&&e.player].join('|');
+        const _alSeen=new Set(state.auditLog.map(_alKey));
+        _ms.auditLog.forEach(e=>{const k=_alKey(e);if(!_alSeen.has(k)){state.auditLog.push(e);_alSeen.add(k);}});
+        state.auditLog.sort((a,b)=>(a.time||0)-(b.time||0));
+      }
       if(_ms&&_ms.archivedBetStats&&!_localArchiveDirty){
         // Adopt the server's archived-bet rollup unless this tab just archived, so a
         // stale save can't wipe the banked lifetime totals.
@@ -3828,7 +3847,8 @@ function _logBalance(player,amount,desc){
   if(!player||!state.players||!state.players[player])return;
   _touchBalance(player);
   if(!state.balanceLog)state.balanceLog=[];
-  state.balanceLog.push({player,time:Date.now(),amount,desc,balance:state.players[player].balance});
+  const _blId=Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8);
+  state.balanceLog.push({id:_blId,player,time:Date.now(),amount,desc,balance:state.players[player].balance});
   if(state.balanceLog.length>2000)state.balanceLog=state.balanceLog.slice(-2000);
 }
 
