@@ -2517,6 +2517,7 @@ footer{position:relative;z-index:1;background:rgba(0,0,0,0.5);border-top:1px sol
         <button class="apt" onclick="apShowTab('season-summary',this)">📊 Season Summary</button>
         <button class="apt" onclick="apShowTab('audit',this)">Audit log</button>
         <button class="apt" onclick="apShowTab('payout-audit',this)">💰 Payout Audit</button>
+        <button class="apt" onclick="apShowTab('reconcile',this)">⚖️ Reconcile Balances</button>
         <button class="apt" onclick="apShowTab('backup',this)">Backup</button>
         <button class="apt" onclick="apShowTab('champions',this)">Champions</button>
         <button class="apt" onclick="apShowTab('badges',this)">Badges</button>
@@ -2814,6 +2815,16 @@ footer{position:relative;z-index:1;background:rgba(0,0,0,0.5);border-top:1px sol
         </div>
         <div id="ap-paudit-status" style="font-size:12px;color:rgba(201,168,76,0.5);margin-bottom:8px;"></div>
         <div id="ap-paudit-results"></div>
+      </div>
+      <div id="apc-reconcile" class="apc" style="display:none;">
+        <p style="font-size:13px;color:var(--cream-dark);margin-bottom:4px;">Compares each player's <b>current balance</b> against the <b>last balance their log recorded</b> and the <b>sum of their whole ledger</b>. Use it to find and fix balances damaged by past sync races.</p>
+        <p style="font-size:11px;color:rgba(201,168,76,0.4);margin-bottom:1rem;">⚠️ These are review signals, not exact truth — the historical log has gaps and a few double-counted race payouts. Verify before applying. Every correction is logged.</p>
+        <div style="display:flex;gap:12px;margin-bottom:1rem;flex-wrap:wrap;align-items:center;">
+          <button class="abtn" onclick="apReconcileRun()" style="flex-shrink:0;">🔍 Scan Balances</button>
+          <label style="font-size:12px;color:var(--cream-dark);display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="recon-show-all" onchange="apReconcileRun()" style="accent-color:#c9a84c;width:14px;height:14px;cursor:pointer;"/> Show all players (not just mismatches)</label>
+        </div>
+        <div id="ap-recon-status" style="font-size:12px;color:rgba(201,168,76,0.5);margin-bottom:8px;"></div>
+        <div id="ap-recon-results"></div>
       </div>
       <div id="apc-backup" class="apc" style="display:none;">
         <p style="font-size:13px;color:var(--cream-dark);margin-bottom:1.5rem;">Download a full backup of all your data or restore from a previous backup.</p>
@@ -4412,6 +4423,7 @@ function apShowTab(tab,btn){
   if(tab==='backup'){apRenderAutoBackups();}
   if(tab==='house-money'){apRenderHouseMoney();}
   if(tab==='payout-audit'){apPayAuditRun();}
+  if(tab==='reconcile'){apReconcileRun();}
   if(tab==='store-pricing'){
     const asl=document.getElementById('ap-pricing-aggr-slider');if(asl)asl.value=state.pricingAggressiveness||1;
     const bsl=document.getElementById('ap-pricing-bal-slider');if(bsl)bsl.value=state.storeBalanceWeight||0;
@@ -13740,6 +13752,109 @@ async function apPayAuditApplyAll(){
     return;
   }
   apPayAuditRun();
+}
+
+// ==================== BALANCE RECONCILIATION ====================
+let _reconRows = [];
+
+// Rebuild a player's balance purely from their ledger: the balance before their first
+// logged entry, plus every logged delta. A cross-check against the stored balance.
+function _reconReconstruct(log){
+  if(!log.length) return null;
+  const start = (log[0].balance||0) - (log[0].amount||0);
+  return log.reduce((s,e)=>s+(e.amount||0), start);
+}
+
+function apReconcileRun(){
+  const status = document.getElementById('ap-recon-status');
+  const results = document.getElementById('ap-recon-results');
+  if(!status||!results) return;
+  const showAll = !!(document.getElementById('recon-show-all')||{}).checked;
+
+  const byP = {};
+  (state.balanceLog||[]).forEach(e=>{ if(!e)return; (byP[e.player]=byP[e.player]||[]).push(e); });
+  const names = (state.names||[]).filter(n=>n!=='__admin__'&&state.players[n]);
+
+  let rows = names.map(name=>{
+    const cur = Math.round(state.players[name].balance||0);
+    const log = (byP[name]||[]).slice().sort((a,b)=>(a.time||0)-(b.time||0));
+    const lastLogged = log.length ? Math.round(log[log.length-1].balance||0) : null;
+    const recon = _reconReconstruct(log);
+    const reconR = recon==null ? null : Math.round(recon);
+    const gap = lastLogged==null ? null : (lastLogged - cur); // >0: current is short vs last recorded
+    return { name, cur, lastLogged, recon: reconR, gap, lastTime: log.length?log[log.length-1].time:null };
+  });
+
+  if(!showAll) rows = rows.filter(r=>r.gap!=null && Math.abs(r.gap)>=1);
+  rows.sort((a,b)=>Math.abs(b.gap||0)-Math.abs(a.gap||0));
+  _reconRows = rows;
+
+  if(!rows.length){
+    status.textContent = '';
+    results.innerHTML = `<div style="background:rgba(129,199,132,0.12);border:1px solid rgba(129,199,132,0.4);border-radius:8px;padding:16px;text-align:center;">
+      <div style="font-size:32px;line-height:1;margin-bottom:8px;">✅</div>
+      <div style="font-size:16px;font-weight:600;color:#81c784;margin-bottom:4px;">All balances match their last recorded ledger value</div>
+      <div style="font-size:12px;color:var(--cream-dark);">No differences found${showAll?'':' — tick "Show all players" to review everyone anyway'}.</div>
+    </div>`;
+    return;
+  }
+
+  const totalShort = rows.reduce((s,r)=>s+((r.gap||0)>0?r.gap:0),0);
+  status.textContent = '';
+  results.innerHTML = `<div style="background:rgba(212,175,55,0.12);border:1px solid rgba(212,175,55,0.45);border-radius:8px;padding:12px 16px;margin-bottom:12px;">
+    <div style="font-size:15px;font-weight:700;color:var(--gold,#c9a84c);">⚖️ ${rows.length} player(s) differ from their last recorded balance.</div>
+    <div style="font-size:12px;color:var(--cream-dark);margin-top:2px;">Apparent total shortfall: <b style="color:#ef9a9a;">$${totalShort.toLocaleString()}</b>. Set each balance you're confident about — the input is pre-filled with the last recorded value.</div>
+  </div>` + rows.map((r,ri)=>{
+    const shortColor = (r.gap||0)>0 ? '#ef9a9a' : '#81c784';
+    const gapLabel = (r.gap||0)>0 ? `short $${(r.gap).toLocaleString()}` : `over $${Math.abs(r.gap).toLocaleString()}`;
+    const dt = r.lastTime ? new Date(r.lastTime).toLocaleDateString('en-US',{month:'numeric',day:'numeric',year:'2-digit'}) : '—';
+    const reconMismatch = (r.recon!=null && r.lastLogged!=null && Math.abs(r.recon - r.lastLogged) > 1);
+    return `
+    <div class="gcard" style="margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
+        ${getPlayerAvatar(r.name,36)}
+        <div style="flex:1;min-width:120px;">
+          <div style="font-size:14px;font-weight:600;color:var(--cream);">${r.name}</div>
+          <div style="font-size:12px;color:${shortColor};font-weight:600;">${gapLabel}</div>
+        </div>
+        <input type="number" id="recon-val-${ri}" value="${r.lastLogged!=null?r.lastLogged:r.cur}" style="width:110px;background:#0d220d;border:1px solid rgba(201,168,76,0.3);border-radius:5px;color:#e8dcc8;font-size:14px;padding:6px 8px;text-align:right;"/>
+        <button class="abtn" style="background:rgba(129,199,132,0.15);border-color:rgba(129,199,132,0.4);font-size:12px;padding:6px 12px;flex-shrink:0;" onclick="apReconcileApply(${ri})">Set balance</button>
+      </div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;background:rgba(0,0,0,0.2);border-radius:6px;padding:8px 10px;font-size:12px;">
+        <span style="color:rgba(201,168,76,0.55);">Current: <b style="color:var(--cream);">$${r.cur.toLocaleString()}</b></span>
+        <span style="color:rgba(201,168,76,0.55);">Last recorded (${dt}): <b style="color:var(--cream);">$${r.lastLogged!=null?r.lastLogged.toLocaleString():'—'}</b></span>
+        <span style="color:rgba(201,168,76,0.55);">Ledger sum: <b style="color:${reconMismatch?'#e0a94c':'var(--cream)'};">$${r.recon!=null?r.recon.toLocaleString():'—'}</b>${reconMismatch?' <span title="Ledger sum disagrees with last recorded — the log likely has gaps or double-counted entries for this player. Verify manually." style="cursor:help;">⚠️</span>':''}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function apReconcileApply(ri){
+  const r = _reconRows[ri];
+  if(!r) return;
+  const p = state.players[r.name];
+  if(!p){ alert('Player not found.'); return; }
+  const input = document.getElementById('recon-val-'+ri);
+  if(!input){ return; }
+  const newVal = Math.round(parseFloat(input.value));
+  if(isNaN(newVal)){ alert('Enter a valid number.'); return; }
+  const oldVal = Math.round(p.balance||0);
+  if(newVal===oldVal){ alert('That is already the current balance — no change.'); return; }
+  const delta = newVal - oldVal;
+  if(!confirm(`Set ${r.name}'s balance from $${oldVal.toLocaleString()} to $${newVal.toLocaleString()}?\n\n(${delta>0?'+':''}$${delta.toLocaleString()} adjustment, logged as a reconciliation correction.)`)) return;
+  const _logLenBefore = (state.balanceLog||[]).length;
+  p.balance = newVal;
+  _touchBalance(r.name);
+  _logBalance(r.name, delta, 'Reconciliation correction: $'+oldVal.toLocaleString()+' → $'+newVal.toLocaleString());
+  auditLog('balance','Balance reconciled: '+r.name, '$'+oldVal.toLocaleString()+' → $'+newVal.toLocaleString()+' ('+(delta>0?'+':'')+'$'+delta.toLocaleString()+')', r.name);
+  const saved = await saveData();
+  if(!saved){
+    p.balance = oldVal;
+    if(state.balanceLog) state.balanceLog = state.balanceLog.slice(0,_logLenBefore);
+    alert('Save failed — balance not changed. Please try again.');
+    return;
+  }
+  apReconcileRun();
 }
 
 function apRenderAuditLog(){
