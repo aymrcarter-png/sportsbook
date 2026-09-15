@@ -13595,17 +13595,27 @@ function apPayAuditRun(){
     }
   });
 
+  const _scannedWon = (state.bets||[]).filter(b=>b.player!=='__admin__'&&b.status==='won').length;
+  const _scannedRefund = (state.bets||[]).filter(b=>b.player!=='__admin__'&&(b.status==='push'||b.status==='refunded')).length;
+
   if(!_payAuditFindings.length){
-    status.textContent = '✅ No missing credits found — all paid bets have matching log entries.';
-    results.innerHTML = '';
+    status.textContent = '';
+    results.innerHTML = `<div style="background:rgba(129,199,132,0.12);border:1px solid rgba(129,199,132,0.4);border-radius:8px;padding:16px;text-align:center;">
+      <div style="font-size:32px;line-height:1;margin-bottom:8px;">✅</div>
+      <div style="font-size:16px;font-weight:600;color:#81c784;margin-bottom:4px;">No missing credits found</div>
+      <div style="font-size:12px;color:var(--cream-dark);">Checked ${_scannedWon} won and ${_scannedRefund} push/refund bet(s) — every one has a matching balance credit in the log.</div>
+    </div>`;
     return;
   }
 
   const grandTotal = _payAuditFindings.reduce((s,f)=>s+f.total,0);
-  status.textContent = `Found ${_payAuditFindings.length} player(s) with missing credits totaling $${grandTotal.toLocaleString()}.`;
+  status.textContent = '';
   if(applyAllBtn) applyAllBtn.style.display='';
 
-  results.innerHTML = _payAuditFindings.map((f,fi)=>`
+  results.innerHTML = `<div style="background:rgba(212,175,55,0.12);border:1px solid rgba(212,175,55,0.45);border-radius:8px;padding:12px 16px;margin-bottom:12px;">
+    <div style="font-size:15px;font-weight:700;color:var(--gold,#c9a84c);">⚠️ Found ${_payAuditFindings.length} player(s) with missing credits totaling $${grandTotal.toLocaleString()}.</div>
+    <div style="font-size:12px;color:var(--cream-dark);margin-top:2px;">Review below and apply the credits you want to restore.</div>
+  </div>` + _payAuditFindings.map((f,fi)=>`
     <div class="gcard" style="margin-bottom:10px;">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
         ${getPlayerAvatar(f.name,36)}
