@@ -7230,9 +7230,19 @@ function sbDeleteGame(gameId){
   const _delMsg=_openStraight.length?`Delete "${game.home} vs ${game.away}"? ${_openStraight.length} open bet(s) will be refunded.`:`Delete "${game.home} vs ${game.away}"? All bets have already been voided/settled — nothing to refund.`;
   if(!confirm(_delMsg))return;
   state.bets.filter(b=>b.gameId==gameId&&b.status==='open').forEach(b=>{b.status='refunded';if(state.players[b.player]){state.players[b.player].balance=Math.round((state.players[b.player].balance||0)+b.wager);_touchBalance(b.player);_logBalance(b.player,b.wager,'Game deleted — bet refunded: '+b.label);}});
+  // Mark the matching home-screen schedule matchup complete so it doesn't linger as "Upcoming".
+  (state.schedule||[]).forEach(e=>{
+    if(!e||e.status==='complete')return;
+    let eh=e.home,ea=e.away;
+    if((!eh||!ea)&&e.matchup){const p=e.matchup.split(' vs ');eh=(p[0]||'').trim();ea=(p[1]||'').trim();}
+    const sameTeams=(eh===game.home&&ea===game.away)||(eh===game.away&&ea===game.home);
+    const sameSeason=(e.season||'Season 1')===(game.season||'Season 1');
+    const sameWeek=(e.week==null||game.week==null)||String(e.week)===String(game.week);
+    if(sameTeams&&sameSeason&&sameWeek)e.status='complete';
+  });
   state.games=state.games.filter(g=>g.id!=gameId);
   if(!state.deletedGameIds)state.deletedGameIds=[];state.deletedGameIds.push(String(gameId));
-  scheduleSave();sbRenderSettle();sbRenderGames();
+  scheduleSave();sbRenderSettle();sbRenderGames();if(typeof renderHomeSch==='function')renderHomeSch();
 }
 function sbVoidGameBets(gameId){
   const game=state.games.find(g=>g.id==gameId);if(!game)return;
