@@ -7308,6 +7308,15 @@ function sbRenderBetHistory(){
   });
   if(!bets.length){list.innerHTML='';noH.style.display='block';return;}
   noH.style.display='none';
+  // Badges depend only on the player, but checkBadges() does a full (partly O(n²)) scan of
+  // state.bets. Computing it per-bet made this loop O(n²+). Memoize the rendered badge HTML per
+  // player so each distinct player is scored once per render.
+  const _badgeHtmlCache={};
+  const _badgeHtmlFor=name=>{
+    if(_badgeHtmlCache[name]!==undefined) return _badgeHtmlCache[name];
+    const html=checkBadges(name).map(id=>{const d=BADGE_DEFS.find(x=>x.id===id);return d?`<span title="${d.name}" style="font-size:.85rem;">${d.icon}</span>`:''}).join('');
+    return _badgeHtmlCache[name]=html;
+  };
   list.innerHTML=bets.map(b=>{
     const g=state.games.find(g=>g.id==b.gameId)||{};
     let badge='<span class="gbadge gb-blue">Open</span>';
@@ -7321,7 +7330,7 @@ function sbRenderBetHistory(){
     const parlayLegsHtml=(b.isParlay&&b.legs&&b.legs.length)?`<div style="margin-top:8px;background:rgba(0,0,0,0.2);border-radius:6px;padding:6px 10px;">${b.legs.map((l,li)=>{const voided=l.voided;const vs=voided?'opacity:0.4;text-decoration:line-through;':'';const voidBtn=voided?(b.status==='open'?`<button class="gbtn-sm" style="border-color:rgba(100,150,255,.4);color:#90caf9;padding:1px 8px;font-size:10px;" onclick="apUnvoidParlayLeg('${b.id}',${li})">Unvoid</button>`:'<span style="font-size:10px;color:rgba(244,67,54,.5);">Voided</span>'):(b.status==='open'?`<button class="gbtn-sm" style="border-color:rgba(244,67,54,.4);color:#ef9a9a;padding:1px 8px;font-size:10px;" onclick="apVoidParlayLeg('${b.id}',${li})">Void</button>`:'');return`<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid rgba(201,168,76,0.06);"><span style="font-size:12px;color:rgba(201,168,76,0.7);flex:1;${vs}">${l.label}</span><span style="font-size:11px;color:rgba(201,168,76,0.4);${vs}">${fmtOdds(l.odds)}</span>${voidBtn}</div>`;}).join('')}</div>`:'';
     return`<div class="gcard"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;">
       <div style="flex:1;min-width:0;">
-        <div style="font-size:14px;font-weight:500;color:var(--cream);">${b.player} ${(()=>{const bs=checkBadges(b.player);return bs.map(id=>{const d=BADGE_DEFS.find(x=>x.id===id);return d?`<span title="${d.name}" style="font-size:.85rem;">${d.icon}</span>`:''}).join('');})()} → ${b.label} <span style="font-size:12px;color:rgba(201,168,76,0.5);">${fmtOdds(b.odds)}</span></div>
+        <div style="font-size:14px;font-weight:500;color:var(--cream);">${b.player} ${_badgeHtmlFor(b.player)} → ${b.label} <span style="font-size:12px;color:rgba(201,168,76,0.5);">${fmtOdds(b.odds)}</span></div>
         <div style="font-size:12px;color:var(--cream-dark);margin-top:2px;">$${b.wager} to win $${b.toWin} · ${g.home||'?'} vs ${g.away||'?'}</div>
         <div style="font-size:11px;color:rgba(201,168,76,0.4);margin-top:2px;">${fmtBetTime(b.time)}</div>
         ${b.refundReason?`<div style="font-size:11px;color:#90caf9;margin-top:2px;">↩ Refund reason: ${b.refundReason}</div>`:''}
